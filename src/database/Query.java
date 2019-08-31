@@ -1,4 +1,4 @@
-package main.database;
+package database;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,6 +17,11 @@ public class Query {
 	
 	public void execute() throws Exception{
 		rs = SqliteConnection.query(sql, obs);
+	}
+	
+	public void executeWith(Object ...obs) throws Exception {
+		this.obs = obs;
+		execute();
 	}
 	
 	private void check() throws SQLException{

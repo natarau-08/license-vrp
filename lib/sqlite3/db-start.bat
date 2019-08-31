@@ -1,0 +1,1 @@
+start sqlite3.exe db.sq3

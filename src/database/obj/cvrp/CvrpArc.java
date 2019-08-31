@@ -1,4 +1,4 @@
-package main.obj.cvrp;
+package database.obj.cvrp;
 
 public class CvrpArc {
 
