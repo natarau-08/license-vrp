@@ -10,7 +10,7 @@ public class SqliteConnection {
 	/***
 	 * Database url
 	 */
-	public static final String URL = "jdbc:sqlite:G://EclipseJavaWorkspace/ProiectDiploma/db.sq3";
+	public static final String URL = "jdbc:sqlite:lib/sqlite3/db.sq3";
 	
 	private static Connection connection;
 	
