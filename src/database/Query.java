@@ -15,11 +15,11 @@ public class Query {
 		this.sql = sql;
 	}
 	
-	public void execute() throws Exception{
+	public void execute() throws SQLException{
 		rs = SqliteConnection.query(sql, obs);
 	}
 	
-	public void executeWith(Object ...obs) throws Exception {
+	public void executeWith(Object ...obs) throws SQLException {
 		this.obs = obs;
 		execute();
 	}

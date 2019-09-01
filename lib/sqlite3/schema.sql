@@ -3,7 +3,10 @@
 CREATE TABLE cvrp_graphs (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	name VARCHAR (100),
-	description VARCHAR (500)
+	description VARCHAR (500),
+	width INTEGER,
+	height INTEGER,
+	mdist INTEGER
 );
 
 CREATE TABLE cvrp_nodes (
@@ -26,7 +29,6 @@ CREATE TABLE cvrp_costs(
 	FOREIGN KEY(node2) REFERENCES cvrp_nodes(id)
 );
 
-/*
-	Reset AUTOINCREMENT:
-		DELETE FROM sqlite_sequence WHERE name = 'table_name';
-*/
+SELECT * FROM cvrp_graphs;
+
+DROP TABLE cvrp_graphs;

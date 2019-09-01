@@ -1,6 +1,7 @@
 package database.obj.cvrp;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import database.SqliteConnection;
 
@@ -11,7 +12,7 @@ public class CvrpNode {
 	private int posX;
 	private int posY;
 	
-	public CvrpNode(int id) throws Exception{
+	public CvrpNode(int id) throws SQLException{
 		ResultSet data = SqliteConnection.query("SELECT * FROM cvrp_nodes WHERE id = ?;", id);
 		
 		this.id = data.getInt("id");

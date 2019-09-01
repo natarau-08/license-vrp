@@ -1,33 +1,66 @@
 package main;
 
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.logging.SimpleFormatter;
+
 import database.SqliteConnection;
+import database.SqliteManager;
 import database.obj.cvrp.CvrpGraph;
 import generator.CapacityGraphGenerator;
+import renderer.GraphRenderer;
 import utils.Clock;
 
 public class Main {
 
+	public static final String LOG_FILE_PATH = "log.txt";
+	public static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+	
 	public static void main(String args[]) {
-		SqliteConnection.init();
-		
+		Clock c = new Clock();
 		try {
-			System.out.println("Generating...");
-			Clock c = new Clock();
+			
+			//preparing logger
+			FileHandler fh = new FileHandler(LOG_FILE_PATH);
+			SimpleFormatter formatter = new SimpleFormatter();
+			fh.setFormatter(formatter);
+			LOGGER.addHandler(fh);
+			
+			SqliteConnection.init();
+			
 			c.start();
 			
-			//CvrpGraph.createNewCvrpGraph("test", "debug rtest");
-			CvrpGraph graph = CvrpGraph.getGraphByName("test");
-			CapacityGraphGenerator.generateCvrpGraph(graph, 100, 10, 50, 10, 100, 10, 0f, 800, 800);
+			int a = 2;
+			
+			switch(a) {
+			case 0:
+				CvrpGraph.createCvrpGraph("test", "debug test",  800, 800, 10);
+				CvrpGraph graph = CvrpGraph.getGraphByName("test");
+				CapacityGraphGenerator.generateCvrpGraph(graph, 10, 10, 50, 10, 100, 0f);
+				break;
+				
+			case 1:
+				SqliteManager.clearDatabase();
+				break;
+				
+			case 2: 
+				graph = CvrpGraph.getGraphByName("test");
+				GraphRenderer.writeCvrpImage(graph);
+				break;
+				
+				default: break;
+			}
+			
 			
 			c.stop();
-			System.out.println("Finished!");
+			LOGGER.info("Finished");
 			
-			System.out.println(c.getWaitInfo());
-			
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			LOGGER.info(c.getWaitInfo());
+		}catch(Exception e) {
+			c.stop();
+			LOGGER.info(c.getWaitInfo() + " Milliseconds: " + c.getMills());
+			LOGGER.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
-	
 }

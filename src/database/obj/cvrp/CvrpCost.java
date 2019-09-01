@@ -1,6 +1,7 @@
 package database.obj.cvrp;
 
 import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import database.SqliteConnection;
 
@@ -10,7 +11,7 @@ public class CvrpCost {
 	private CvrpNode n1;
 	private CvrpNode n2;
 	
-	public CvrpCost(int id, CvrpGraph graph) throws Exception{
+	public CvrpCost(int id, CvrpGraph graph) throws SQLException{
 		ResultSet drs = SqliteConnection.query("SELECT * FROM cvrp_costs WHERE id = ?;", id);
 		
 		this.val = drs.getInt("val");

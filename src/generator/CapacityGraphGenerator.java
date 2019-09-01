@@ -9,13 +9,16 @@ import database.SqliteConnection;
 import database.obj.cvrp.CvrpGraph;
 import utils.Calc;
 import utils.Point;
+import static main.Main.LOGGER;
 
 public class CapacityGraphGenerator {
 	
 	public Random random;
 	public int boundX, boundY;
 	
-	private CapacityGraphGenerator(Random random, int bx, int by) {
+	public static final int MAX_NODE_TRIES = 1000;
+	
+	protected CapacityGraphGenerator(Random random, int bx, int by) {
 		this.random = random;
 		this.boundX = bx;
 		this.boundY = by;
@@ -33,20 +36,17 @@ public class CapacityGraphGenerator {
 	 * @param maxCost - 
 	 * @param minDemand -
 	 * @param maxDemand -
-	 * @param minDist - [draw] minimum distance between clients
 	 * @param distMultiplier - [draw] how much of the distance is added to the cost 
 	 * @param spreadX - [draw] from 0 to right
 	 * @param spreadY - [draw]
 	 * @throws Exception  if anything goes wrong. Bad practice.
 	 * 
 	 */
-	public static void generateCvrpGraph(CvrpGraph graph, int nodeCount, int minCost, int maxCost, int minDemand, int maxDemand,  int minDist, float distMultiplier, int spreadX, int spreadY) throws Exception{
+	public static void generateCvrpGraph(CvrpGraph graph, int nodeCount, int minCost, int maxCost, int minDemand, int maxDemand,  float distMultiplier) throws Exception{		
 		int gId = graph.getId();
 		
 		Random rand = new Random();
-		CapacityGraphGenerator cgg = new CapacityGraphGenerator(rand, spreadX, spreadY);
-		
-		
+		CapacityGraphGenerator cgg = new CapacityGraphGenerator(rand, graph.getWidth(), graph.getHeight());
 		
 		//we'll need all positions
 		LinkedList<Point> nodesPos = new LinkedList<Point>();
@@ -56,9 +56,14 @@ public class CapacityGraphGenerator {
 		
 		nodesPos.add(p);
 		
+		LOGGER.info("Creating depot at " + p);
+		
 		Query nodeInsert = new Query("INSERT INTO cvrp_nodes(posx, posy, demand, graph) VALUES(?, ?, ?, ?);", (int)p.x, (int)p.y, 0, gId);
 		
 		nodeInsert.execute();
+		
+		LOGGER.info("Depot created");
+		LOGGER.info("Generating " + nodeCount + " nodes");
 		
 		int nodesToAdd = nodeCount;
 		int tries = 0;
@@ -67,24 +72,35 @@ public class CapacityGraphGenerator {
 			tries++;
 			
 			p = cgg.getRandomPoint();
+			LOGGER.info("Attemting to make node at " + p);
 			
-			if(tries > 1000) throw new Exception("[Node] There is no more space to generate more nodes");
+			if(tries > MAX_NODE_TRIES) throw new Exception("[Node] There is no more space to generate more nodes");
 			
 			for(Point q : nodesPos) {
 				double dist = Calc.dist(p, q);
-				if(minDist > dist) {
+				if(graph.getMinDist() > dist) {
+					LOGGER.info("Cannot place node at " + p + ". Another node is too close. Min dist: " + graph.getMinDist());
+					LOGGER.info("Tries left: " + (MAX_NODE_TRIES - tries));
 					continue fp;
 				}
 			}
 			
+			LOGGER.info("Node can be placed at " + p);
+			LOGGER.info("Computing demand");
+			
 			int demand = minDemand + rand.nextInt(maxDemand - minDemand);
 			
+			LOGGER.info("Demand for " + p + " node is " + demand);
+			
 			nodeInsert.executeWith((int)p.x, (int)p.y, demand, gId);
+			
+			LOGGER.info(p + " node created");
 			
 			nodesPos.add(p);
 			tries = 0;
 			nodesToAdd --;
 			
+			LOGGER.info("Remaining nodes to add " + nodesToAdd);
 		}
 		
 		//nodes are added at this point, the hard part is to generate costs
@@ -102,6 +118,7 @@ public class CapacityGraphGenerator {
 			nodesPos.add(p);
 		}
 		
+		LOGGER.info("Generating costs");
 		Query insertCost = new Query("INSERT INTO cvrp_costs(val, node1, node2) VALUES(?, ?, ?);");
 		
 		for(Point r: nodesPos) {
@@ -109,12 +126,14 @@ public class CapacityGraphGenerator {
 				double dist = Calc.dist(r, s);
 				int toAdd = (int)(dist * distMultiplier);
 				
-				if(toAdd > minCost || true) {
+				if(toAdd > minCost) {
 					toAdd = minCost;
 				}
 				int costValue = minCost - toAdd + rand.nextInt(maxCost - minCost + toAdd);
 				
 				insertCost.executeWith(s.z, r.z, costValue);
+				
+				LOGGER.info(String.format("Generated cost value %d for pair (%s, %s)", costValue, r, s));
 			}
 		}
 	}
