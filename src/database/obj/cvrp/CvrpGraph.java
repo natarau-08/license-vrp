@@ -11,6 +11,15 @@ import java.util.Map;
 import database.Query;
 import database.SqliteConnection;
 
+/**
+ * Represents a graph in which the following constraints are applied:
+ * <ul>
+ * 	<li>Every client has a request</li>
+ * 	<li>Every path between two nodes has a cost</li>
+ * 	<li>Vehicles have limited capacity</li>
+ * </ul>
+ * @author Alexandru
+ */
 public class CvrpGraph {
 	
 	private HashMap<Integer, CvrpNode> nodes;
@@ -51,26 +60,26 @@ public class CvrpGraph {
 		LOGGER.info("All nodes fetched");
 		LOGGER.info("Fetching all costs");
 		
-		ResultSet crs = SqliteConnection.query("SELECT cc.id AS ccid FROM cvrp_costs cc JOIN cvrp_nodes cn ON cc.node1 = cn.id WHERE cn.graph = ?", index);
+		ResultSet crs = SqliteConnection.query("SELECT id FROM cvrp_costs WHERE graph = ?;", index);
 		
 		while (crs.next()) {
-			int id = crs.getInt("ccid");
-			costs.put(id, new CvrpCost(id, this));
+			int id = crs.getInt("id");
+			costs.put(id, new CvrpCost(id));
 		}
 		
 		LOGGER.info("All Costs fetched. CvrpGraph loading is complete");
 	}
 	
-	public int getId() {
-		return id;
-	}
-
-	public CvrpNode getNode(int key) {
-		return nodes.get(key);
+	public HashMap<Integer, CvrpNode> getNodes(){
+		return nodes;
 	}
 	
-	public CvrpCost getCost(int key) {
-		return costs.get(key);
+	public HashMap<Integer, CvrpCost> getCosts(){
+		return costs;
+	}
+	
+	public int getId() {
+		return id;
 	}
 		
 	public String getDescription() {
@@ -107,6 +116,16 @@ public class CvrpGraph {
 		LinkedList<CvrpNode> list = new LinkedList<>();
 		
 		for(Map.Entry<Integer, CvrpNode> entry : nodes.entrySet()) {
+			list.add(entry.getValue());
+		}
+		
+		return list;
+	}
+	
+	public LinkedList<CvrpCost> getCostsAsList(){
+		LinkedList<CvrpCost> list = new LinkedList<>();
+		
+		for(Map.Entry<Integer, CvrpCost> entry : costs.entrySet()) {
 			list.add(entry.getValue());
 		}
 		

@@ -119,10 +119,14 @@ public class CapacityGraphGenerator {
 		}
 		
 		LOGGER.info("Generating costs");
-		Query insertCost = new Query("INSERT INTO cvrp_costs(val, node1, node2) VALUES(?, ?, ?);");
+		Query insertCost = new Query("INSERT INTO cvrp_costs(val, graph, node1, node2) VALUES(?, ?, ?, ?);");
 		
-		for(Point r: nodesPos) {
-			for(Point s: nodesPos) {
+		for(int i=0;i<nodesPos.size()-1;i++) {
+			for(int j=i+1;j<nodesPos.size();j++) {
+				
+				Point r = nodesPos.get(i);
+				Point s = nodesPos.get(j);
+				
 				double dist = Calc.dist(r, s);
 				int toAdd = (int)(dist * distMultiplier);
 				
@@ -131,7 +135,7 @@ public class CapacityGraphGenerator {
 				}
 				int costValue = minCost - toAdd + rand.nextInt(maxCost - minCost + toAdd);
 				
-				insertCost.executeWith(s.z, r.z, costValue);
+				insertCost.executeWith(costValue, gId, s.z, r.z);
 				
 				LOGGER.info(String.format("Generated cost value %d for pair (%s, %s)", costValue, r, s));
 			}

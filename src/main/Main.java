@@ -35,23 +35,23 @@ public class Main {
 			
 			switch(a) {
 			case 0:
+				SqliteManager.clearDatabase();
 				CvrpGraph.createCvrpGraph("test", "debug test",  800, 800, 10);
 				CvrpGraph graph = CvrpGraph.getGraphByName("test");
 				CapacityGraphGenerator.generateCvrpGraph(graph, 10, 10, 50, 10, 100, 0f);
 				break;
 				
-			case 1:
-				SqliteManager.clearDatabase();
-				break;
-				
-			case 2: 
+			case 1: 
 				graph = CvrpGraph.getGraphByName("test");
 				GraphRenderer.writeCvrpImage(graph);
 				break;
-				
+			
+			case 2:
+				graph = CvrpGraph.getGraphByName("test");
+				GraphRenderer.writeCvrpImageWithCosts(graph);
+				break;
 				default: break;
 			}
-			
 			
 			c.stop();
 			LOGGER.info("Finished");

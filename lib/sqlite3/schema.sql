@@ -21,6 +21,7 @@ CREATE TABLE cvrp_nodes (
 
 CREATE TABLE cvrp_costs(
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	graph INTEGER,
 	val INTEGER,
 	node1 INTEGER,
 	node2 INTEGER,
@@ -31,4 +32,5 @@ CREATE TABLE cvrp_costs(
 
 SELECT * FROM cvrp_graphs;
 
-DROP TABLE cvrp_graphs;
+--DROP TABLE cvrp_graphs;
+--DROP TABLE cvrp_costs;
