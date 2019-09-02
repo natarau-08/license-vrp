@@ -36,4 +36,8 @@ public class CvrpNode {
 	public int getY() {
 		return this.posY;
 	}
+	
+	public int hashCode() {
+		return id;
+	}
 }

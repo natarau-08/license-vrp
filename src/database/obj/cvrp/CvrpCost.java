@@ -7,6 +7,7 @@ import database.SqliteConnection;
 
 public class CvrpCost {
 
+	private int id;
 	private int val;
 	private int n1;
 	private int n2;
@@ -17,6 +18,7 @@ public class CvrpCost {
 		this.val = drs.getInt("val");
 		n1 = drs.getInt("node1");
 		n2 = drs.getInt("node2");
+		this.id = id;
 	}
 	
 	public int[] getNodesIndexes() {
@@ -25,5 +27,9 @@ public class CvrpCost {
 	
 	public int getCost() {
 		return val;
+	}
+	
+	public int hashCode() {
+		return id;
 	}
 }

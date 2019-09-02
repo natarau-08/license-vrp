@@ -24,6 +24,7 @@ public class CvrpGraph {
 	
 	private HashMap<Integer, CvrpNode> nodes;
 	private HashMap<Integer, CvrpCost> costs;
+	private HashMap<Integer, Integer> arcs;
 	
 	private String description, name;
 	private int id, width, height, minDist;
@@ -50,6 +51,7 @@ public class CvrpGraph {
 		
 		nodes = new HashMap<>();
 		costs = new HashMap<>();
+		arcs = new HashMap<>();
 		
 		while (nrs.next()) {
 			int id = nrs.getInt("id");
@@ -67,6 +69,8 @@ public class CvrpGraph {
 			costs.put(id, new CvrpCost(id));
 		}
 		
+		
+		
 		LOGGER.info("All Costs fetched. CvrpGraph loading is complete");
 	}
 	
@@ -76,6 +80,10 @@ public class CvrpGraph {
 	
 	public HashMap<Integer, CvrpCost> getCosts(){
 		return costs;
+	}
+	
+	public HashMap<Integer, Integer> getArcs(){
+		return arcs;
 	}
 	
 	public int getId() {
@@ -172,5 +180,9 @@ public class CvrpGraph {
 		int id = idSet.getInt("id");
 		
 		return new CvrpGraph(id);
+	}
+	
+	public int hashCode() {
+		return id;
 	}
 }

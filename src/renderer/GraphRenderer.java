@@ -28,22 +28,43 @@ public class GraphRenderer {
 		g.setColor(Color.WHITE);
 		g.fillRect(0, 0, img.getWidth(), img.getHeight());
 		
+		//drawing arcs
+		HashMap<Integer, Integer> arcs = graph.getArcs();
+		for(Map.Entry<Integer, Integer> entry : arcs.entrySet()) {
+			CvrpNode n1 = graph.getNodes().get(entry.getKey());
+			CvrpNode n2 = graph.getNodes().get(entry.getValue());
+			
+			int x1 = n1.getX();
+			int y1 = n1.getY();
+			
+			int x2 = n2.getX();
+			int y2 = n2.getY();
+			
+			g.setColor(Color.BLACK);
+			g.drawLine(x1, y1, x2, y2);
+		}
+		
 		int radius = graph.getMinDist()/2;
 		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
 		
 		for(CvrpNode n : nodes) {
-			if(n.getDemand() == 0) {
-				g.setColor(Color.green);
-			}else {
-				g.setColor(Color.red);
-			}
-			
 			int x = n.getX();
 			int y = n.getY();
 			
-			g.fillOval(x-radius/2, y-radius/2, radius, radius);
-			
+			if(n.getDemand() == 0) {
+				g.setColor(Color.green);
+				g.fillRect(x-radius/2, y-radius/2, radius, radius);
+				g.setColor(Color.BLACK);
+				g.drawRect(x-radius/2, y-radius/2, radius, radius);
+			}else {
+				g.setColor(Color.red);
+				g.fillOval(x-radius/2, y-radius/2, radius, radius);
+				g.setColor(Color.BLACK);
+				g.drawOval(x-radius/2, y-radius/2, radius, radius);
+			}
 		}
+		
+		
 		
 		BufferedImage background = new BufferedImage(graph.getWidth() + 2, graph.getHeight() + 2, BufferedImage.TYPE_3BYTE_BGR);
 		g = (Graphics2D) background.getGraphics();

@@ -1,7 +1,13 @@
 package algorithm;
 
-import database.obj.cvrp.CvrpGraph;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.LinkedList;
 
+import database.SqliteConnection;
+import database.obj.cvrp.CvrpGraph;
+import database.obj.cvrp.CvrpNode;
+import static main.Main.LOGGER;
 /**
  * Transforms graphs into a set of matrices
  * @author Alexandru
@@ -9,10 +15,57 @@ import database.obj.cvrp.CvrpGraph;
 public class GraphParser {
 
 	/**
-	 * Converts database objects into matrices for CvrpGraph
+	 * Converts database objects into matrices for CvrpGraph<br>
+	 * Matrix demand is 2:n<br>
+	 * Cost demand is n:n<br>
+	 * n - number of nodes in graph
 	 * @return - array af matrices. First matrix contains the demands. The second contains travel costs
 	 */
-	public static int[][][] parseCvrpGraph(CvrpGraph graph){
-		return null;
+	public static int[][][] parseCvrpGraph(CvrpGraph graph) throws Exception {
+		LinkedList<CvrpNode> nodesList = graph.getNodesAsList();
+		
+		String demandLog = "";
+		
+		int[][] nodes = new int[2][nodesList.size()];
+		for(int i=0;i<nodesList.size();i++) {
+			nodes[0][i] = nodesList.get(i).getId();
+			nodes[1][i] = nodesList.get(i).getDemand();
+			demandLog += nodes[1][i] + "\t";
+		}
+		
+		int[][] costs = new int[nodesList.size()][nodesList.size()];
+		String costLog = "";
+		
+		for(int i=0;i<costs.length;i++) {
+			for(int j=0;j<costs[i].length;j++) {
+				if(i<j) {
+					int n1id = nodes[0][i];
+					int n2id = nodes[0][j];
+					
+					//should change to nonquery
+					ResultSet costValue = SqliteConnection.query("SELECT val FROM cvrp_costs WHERE (node1 = ? AND node2 = ?) OR (node1 = ? AND node2 = ?)", n1id, n2id, n2id, n1id);
+					
+					if(!costValue.next()) {
+						throw new SQLException("Could not find cost of nodes (" + n1id + ", " + n2id + ")");
+					}
+					
+					costs[i][j] = costValue.getInt("val");
+					
+					if(costValue.next()) {
+						throw new SQLException("Found more than one cost of nodes (" + n1id + ", " + n2id + ")");
+					}
+					
+					costLog += costs[i][j] + "\t";
+				}else {
+					costLog += "-\t";
+				}
+			}
+			
+			costLog += "\n";
+		}
+		
+		LOGGER.info("Demand vector:\n" + demandLog);
+		LOGGER.info("Cost matrix:\n" + costLog);
+		return new int[][][] {nodes, costs};
 	}
 }

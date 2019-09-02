@@ -5,12 +5,14 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import algorithm.ClarkeWright;
+import algorithm.GraphParser;
 import database.SqliteConnection;
 import database.SqliteManager;
 import database.obj.cvrp.CvrpGraph;
 import generator.CapacityGraphGenerator;
 import renderer.GraphRenderer;
-import utils.Clock;
+import utils.Calc;
 
 public class Main {
 
@@ -18,7 +20,7 @@ public class Main {
 	public static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 	
 	public static void main(String args[]) {
-		Clock c = new Clock();
+		
 		try {
 			
 			//preparing logger
@@ -29,16 +31,22 @@ public class Main {
 			
 			SqliteConnection.init();
 			
-			c.start();
-			
-			int a = 2;
-			
+			int a = 3;
+			//SqliteManager.clearDatabase();
 			switch(a) {
 			case 0:
 				SqliteManager.clearDatabase();
-				CvrpGraph.createCvrpGraph("test", "debug test",  800, 800, 10);
+				CvrpGraph.createCvrpGraph("test", "debug test",  800, 800, 32);
 				CvrpGraph graph = CvrpGraph.getGraphByName("test");
-				CapacityGraphGenerator.generateCvrpGraph(graph, 10, 10, 50, 10, 100, 0f);
+				
+				long mls = System.currentTimeMillis();
+				LOGGER.info("Generating graph...");
+				
+				CapacityGraphGenerator.generateCvrpGraph(graph, 10, 10, 50, 10, 100, 0.5f);
+				
+				mls = System.currentTimeMillis() - mls;
+				LOGGER.info("Generating completed in " + Calc.mlsToHms(mls) + ". Milliseconds: " + mls);
+				
 				break;
 				
 			case 1: 
@@ -50,16 +58,19 @@ public class Main {
 				graph = CvrpGraph.getGraphByName("test");
 				GraphRenderer.writeCvrpImageWithCosts(graph);
 				break;
+			
+			case 3:
+				graph = CvrpGraph.getGraphByName("test");
+				
+				ClarkeWright.cvrp(graph, 150, ClarkeWright.CLARKE_WRIGHT_SQUENTIAL);
+				
+				break;
 				default: break;
 			}
 			
-			c.stop();
 			LOGGER.info("Finished");
 			
-			LOGGER.info(c.getWaitInfo());
 		}catch(Exception e) {
-			c.stop();
-			LOGGER.info(c.getWaitInfo() + " Milliseconds: " + c.getMills());
 			LOGGER.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
