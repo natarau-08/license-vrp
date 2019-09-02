@@ -19,7 +19,7 @@ public class GraphParser {
 	 * Matrix demand is 2:n<br>
 	 * Cost demand is n:n<br>
 	 * n - number of nodes in graph
-	 * @return - array af matrices. First matrix contains the demands. The second contains travel costs
+	 * @return - array of matrices. First matrix contains the database id's and the demands. The second contains travel costs
 	 */
 	public static int[][][] parseCvrpGraph(CvrpGraph graph) throws Exception {
 		LinkedList<CvrpNode> nodesList = graph.getNodesAsList();

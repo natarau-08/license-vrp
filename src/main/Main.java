@@ -6,7 +6,6 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import algorithm.ClarkeWright;
-import algorithm.GraphParser;
 import database.SqliteConnection;
 import database.SqliteManager;
 import database.obj.cvrp.CvrpGraph;
@@ -31,7 +30,7 @@ public class Main {
 			
 			SqliteConnection.init();
 			
-			int a = 3;
+			int a = 4;
 			//SqliteManager.clearDatabase();
 			switch(a) {
 			case 0:
@@ -62,9 +61,17 @@ public class Main {
 			case 3:
 				graph = CvrpGraph.getGraphByName("test");
 				
-				ClarkeWright.cvrp(graph, 150, ClarkeWright.CLARKE_WRIGHT_SQUENTIAL);
+				ClarkeWright.baseCvrp(graph, 100, ClarkeWright.CLARKE_WRIGHT_SQUENTIAL);
+				GraphRenderer.writeCvrpImage(graph);
+				break;
+				
+			case 4:
+				graph = CvrpGraph.getGraphByName("test");
+				
+				ClarkeWright.oopCvrp(graph, 100);
 				
 				break;
+				
 				default: break;
 			}
 			

@@ -1,6 +1,7 @@
 package renderer;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
@@ -61,7 +62,10 @@ public class GraphRenderer {
 				g.fillOval(x-radius/2, y-radius/2, radius, radius);
 				g.setColor(Color.BLACK);
 				g.drawOval(x-radius/2, y-radius/2, radius, radius);
+				
+				
 			}
+			drawNodeInfo(g, n, radius);
 		}
 		
 		
@@ -106,5 +110,18 @@ public class GraphRenderer {
 		BufferedImage image = renderCvrpGraph(graph);
 		renderCvrpCosts(graph, image);
 		writeImage(image);
+	}
+	
+	public static void drawNodeInfo(Graphics2D g, CvrpNode node, int radius) {
+		FontMetrics metrics = g.getFontMetrics();
+		String str = node.getId() + ", " + node.getDemand();
+		int strW = metrics.stringWidth(str);
+		//int strH = metrics.getHeight() + metrics.getAscent();
+		
+		int x = node.getX() - strW/2;
+		int y = node.getY() + radius + 5;
+		
+		g.setColor(Color.BLACK);
+		g.drawString(str, x, y);
 	}
 }
