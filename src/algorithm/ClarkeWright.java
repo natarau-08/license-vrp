@@ -114,7 +114,7 @@ public class ClarkeWright {
 		LOGGER.info("Time Passed: " + Calc.mlsToHms(deltaT) + "\nmls: " + deltaT);
 	}
 
-	public static void oopCvrp(CvrpGraph graph, int vehicleCapacity) {
+	public static void oopCvrp(CvrpGraph graph, int vehicleCapacity, int algorithm) {
 		//fetching demands
 		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
 		LinkedList<CvrpCost> costs = graph.getCostsAsList();
@@ -122,6 +122,10 @@ public class ClarkeWright {
 		
 		int[] nodesIds = new int[nodes.size()];
 		int depId = graph.getDepot().getId();
+		
+		LinkedList<LinkedList<Integer>> routes = new LinkedList<>();
+		LinkedList<Integer> route = new LinkedList<>();
+		LinkedList<CvrpReduction> toRemove = new LinkedList<>();
 		
 		for(int i=0;i<nodesIds.length;i++) {
 			nodesIds[i] = nodes.get(i).getId();
@@ -162,9 +166,30 @@ public class ClarkeWright {
 		reductions.sort((a, b) -> b.getValue() - a.getValue());
 		LOGGER.info(reductions.toString());
 		
+		if(algorithm == CLARKE_WRIGHT_SQUENTIAL) {
+			computeOopCwSequentialSolution(graph, vehicleCapacity, reductions, toRemove, route);
+			for(int i=0;i<nodesIds.length;i++) {
+				if(!graph.getRoutes().contains(nodesIds[i])) {
+					graph.getRoutes().add(depId);
+					graph.getRoutes().add(nodesIds[i]);
+					graph.getRoutes().add(depId);
+					break;
+				}
+			}
+		}else if(algorithm == CLARKE_WRIGHT_PARALLEL) {
+			computeOopCwParallelSolution(graph, vehicleCapacity, reductions, toRemove, routes);
+		}
+		
+		long deltaT = System.currentTimeMillis() - t0;
+		LOGGER.info("Time passed: " + Calc.mlsToHms(deltaT) + "\nmls:" + deltaT);
+		
+	}
+	
+	private static void computeOopCwSequentialSolution(CvrpGraph graph, int vehicleCapacity, LinkedList<CvrpReduction> reductions, 
+			LinkedList<CvrpReduction> toRemove, LinkedList<Integer> route) {
 		int load = 0;
-		LinkedList<Integer> route = new LinkedList<>();
-		LinkedList<CvrpReduction> toRemove = new LinkedList<>();
+		int depId = graph.getDepot().getId();
+		
 		while(!reductions.isEmpty()) {
 			
 			//removing added reductions
@@ -186,15 +211,13 @@ public class ClarkeWright {
 					* if route is not new, the reduction must have a node that is a margin of current route 
 				*/
 				
-				int id0 = r.getNode(0).getId();
+				int id0 = r.getNode(0).getId();//nodes to add to the route
 				int id1 = r.getNode(1).getId();
 				
-				int dem0 = r.getNode(0).getDemand();
+				int dem0 = r.getNode(0).getDemand();//nodes demand
 				int dem1 = r.getNode(1).getDemand();
 				
 				if(load == 0) {
-					LOGGER.info("Creating new route");
-					
 					if(dem0 + dem1 <= vehicleCapacity && !graph.getRoutes().contains(id0) && !graph.getRoutes().contains(id1)) {
 						route.add(id0);
 						route.add(id1);
@@ -213,7 +236,7 @@ public class ClarkeWright {
 					
 				}
 				
-				int routeFirst = route.getFirst();
+				int routeFirst = route.getFirst();//they must remain here god dammit!
 				int routeLast = route.getLast();
 				
 				//take out reductions that contain as nodes the end and the beginning of route
@@ -256,8 +279,10 @@ public class ClarkeWright {
 			}
 		}
 		
-		long deltaT = System.currentTimeMillis() - t0;
-		LOGGER.info("Time passed: " + Calc.mlsToHms(deltaT) + "\nmls:" + deltaT);
 	}
-	
+
+	private static void computeOopCwParallelSolution(CvrpGraph graph, int vehicleCapacity, LinkedList<CvrpReduction> reductions,
+			LinkedList<CvrpReduction> toRemove, LinkedList<LinkedList<Integer>> routes) {
+		System.out.println("Not implemented");
+	}
 }

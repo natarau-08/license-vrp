@@ -139,7 +139,6 @@ public class CapacityGraphGenerator {
 				}else {
 					costValue = toAdd;
 				}
-					
 				
 				insertCost.executeWith(costValue, gId, s.z, r.z);
 				

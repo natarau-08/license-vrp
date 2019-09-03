@@ -32,14 +32,15 @@ public class Main {
 			
 			int a = 0;
 			int vehicleCapacity = 100;
-			int nodes = 2;
+			int nodes = 20;
+			int width = 1600, height = 800;
 			String graphName = "test";
 			
 			//SqliteManager.clearDatabase();
 			switch(a) {
 			case 0:
 				SqliteManager.clearDatabase();
-				CvrpGraph.createCvrpGraph(graphName, "debug test",  800, 800, 32);
+				CvrpGraph.createCvrpGraph(graphName, "debug test",  width, height, 32);
 				CvrpGraph graph = CvrpGraph.getGraphByName(graphName);
 				
 				long mls = System.currentTimeMillis();
@@ -52,7 +53,7 @@ public class Main {
 				LOGGER.info("Reloading Graph");
 				graph = CvrpGraph.getGraphByName(graphName);
 				
-				ClarkeWright.oopCvrp(graph, 100);
+				ClarkeWright.oopCvrp(graph, 100, ClarkeWright.CLARKE_WRIGHT_SQUENTIAL);
 				LOGGER.info(graph.getRoutes().toString());
 				
 				GraphRenderer.writeCvrpImage(graph);
@@ -61,7 +62,7 @@ public class Main {
 				
 			case 1:
 				graph = CvrpGraph.getGraphByName(graphName);
-				ClarkeWright.oopCvrp(graph, vehicleCapacity);
+				ClarkeWright.oopCvrp(graph, vehicleCapacity, ClarkeWright.CLARKE_WRIGHT_SQUENTIAL);
 				GraphRenderer.writeCvrpImage(graph);
 				LOGGER.info(graph.getRoutes().toString());
 				
