@@ -1,5 +1,7 @@
 package algorithm;
 
+import static main.Main.LOGGER;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.LinkedList;
@@ -7,7 +9,6 @@ import java.util.LinkedList;
 import database.SqliteConnection;
 import database.obj.cvrp.CvrpGraph;
 import database.obj.cvrp.CvrpNode;
-import static main.Main.LOGGER;
 /**
  * Transforms graphs into a set of matrices
  * @author Alexandru

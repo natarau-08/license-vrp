@@ -22,14 +22,22 @@ import database.SqliteConnection;
  */
 public class CvrpGraph {
 	
-	private HashMap<Integer, CvrpNode> nodes;
-	private HashMap<Integer, CvrpCost> costs;
-	private HashMap<Integer, Integer> arcs;
+	/**
+	 * Current graph initialized when CvrpGraph constructor is called
+	 */
+	public static CvrpGraph GRAPH;
 	
+	private HashMap<Integer, CvrpNode> nodes;
+	private HashMap<CvrpArc, CvrpCost> costs;
+	private LinkedList<Integer> routes;
+	
+	private CvrpNode depot;
+	 
 	private String description, name;
 	private int id, width, height, minDist;
 	
 	public CvrpGraph(int index) throws SQLException {
+		GRAPH = this;
 		
 		LOGGER.info("Fetching cvrp_graph from database. Index: " + index);
 		
@@ -51,7 +59,7 @@ public class CvrpGraph {
 		
 		nodes = new HashMap<>();
 		costs = new HashMap<>();
-		arcs = new HashMap<>();
+		routes = new LinkedList<>();
 		
 		while (nrs.next()) {
 			int id = nrs.getInt("id");
@@ -62,14 +70,22 @@ public class CvrpGraph {
 		LOGGER.info("All nodes fetched");
 		LOGGER.info("Fetching all costs");
 		
-		ResultSet crs = SqliteConnection.query("SELECT id FROM cvrp_costs WHERE graph = ?;", index);
+		ResultSet crs = SqliteConnection.query("SELECT id, node1, node2 FROM cvrp_costs WHERE graph = ?;", index);
 		
 		while (crs.next()) {
 			int id = crs.getInt("id");
-			costs.put(id, new CvrpCost(id));
+			int node1 = crs.getInt("node1");
+			int node2 = crs.getInt("node2");
+			
+			costs.put(new CvrpArc(node1, node2), new CvrpCost(id));
 		}
 		
-		
+		for(Map.Entry<Integer, CvrpNode> entry: nodes.entrySet()) {
+			if(entry.getValue().getDemand() == 0) {
+				depot = entry.getValue();
+				break;
+			}
+		}
 		
 		LOGGER.info("All Costs fetched. CvrpGraph loading is complete");
 	}
@@ -78,12 +94,12 @@ public class CvrpGraph {
 		return nodes;
 	}
 	
-	public HashMap<Integer, CvrpCost> getCosts(){
+	public HashMap<CvrpArc, CvrpCost> getCosts(){
 		return costs;
 	}
 	
-	public HashMap<Integer, Integer> getArcs(){
-		return arcs;
+	public LinkedList<Integer> getRoutes(){
+		return routes;
 	}
 	
 	public int getId() {
@@ -133,7 +149,7 @@ public class CvrpGraph {
 	public LinkedList<CvrpCost> getCostsAsList(){
 		LinkedList<CvrpCost> list = new LinkedList<>();
 		
-		for(Map.Entry<Integer, CvrpCost> entry : costs.entrySet()) {
+		for(Map.Entry<CvrpArc, CvrpCost> entry : costs.entrySet()) {
 			list.add(entry.getValue());
 		}
 		
@@ -143,6 +159,17 @@ public class CvrpGraph {
 	public int getNodeCount() {
 		return nodes.size();
 	}
+	
+	public CvrpNode getDepot() {
+		return depot;
+	}
+	
+	public int hashCode() {
+		return id;
+	}
+	
+	
+	
 	
 	public static int createCvrpGraph(String name, String description, int width, int height, int minDist) throws SQLException{
 		
@@ -182,7 +209,4 @@ public class CvrpGraph {
 		return new CvrpGraph(id);
 	}
 	
-	public int hashCode() {
-		return id;
-	}
 }

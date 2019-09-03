@@ -37,7 +37,23 @@ public class CvrpNode {
 		return this.posY;
 	}
 	
+	@Override
 	public int hashCode() {
 		return id;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(obj instanceof CvrpNode) {
+			return ((CvrpNode)obj).id == id;
+		}
+		return false;
+	}
+
+	@Override
+	public String toString() {
+		return String.format("%d(%d)", id, demand);
+	}
+	
+	
 }

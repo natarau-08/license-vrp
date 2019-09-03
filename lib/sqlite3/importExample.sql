@@ -7,7 +7,7 @@ INSERT INTO cvrp_nodes (posx, posy, demand, graph) VALUES (400, 400, 0 , 1);
 INSERT INTO cvrp_nodes (posx, posy, demand, graph) VALUES (720, 50, 37, 1);
 INSERT INTO cvrp_nodes (posx, posy, demand, graph) VALUES (20, 650, 35, 1);
 INSERT INTO cvrp_nodes (posx, posy, demand, graph) VALUES (780, 540, 30, 1);
-INSERT INTO cvrp_nodes (posx, posy, demand, graph) VALUES (150, 256, 25, 1);
+INSERT INTO cvrp_nodes (posx, posy, demand, graph) VALUES (150, 635, 25, 1);
 INSERT INTO cvrp_nodes (posx, posy, demand, graph) VALUES (320, 166, 32, 1);
 
 --SELECT * FROM cvrp_costs;

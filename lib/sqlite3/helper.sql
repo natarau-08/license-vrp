@@ -14,7 +14,7 @@ JOIN cvrp_nodes cn ON cc.node1 = cn.id
 WHERE cn.graph = 1;
 
 SELECT * FROM cvrp_nodes
-
+SELECT * FROM cvrp_costs
 SELECT COUNT(*) FROM cvrp_nodes;
 
 SELECT COUNT(*) FROM cvrp_costs;

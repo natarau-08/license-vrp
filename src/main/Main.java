@@ -30,48 +30,47 @@ public class Main {
 			
 			SqliteConnection.init();
 			
-			int a = 4;
+			int a = 0;
+			int vehicleCapacity = 100;
+			int nodes = 2;
+			String graphName = "test";
+			
 			//SqliteManager.clearDatabase();
 			switch(a) {
 			case 0:
 				SqliteManager.clearDatabase();
-				CvrpGraph.createCvrpGraph("test", "debug test",  800, 800, 32);
-				CvrpGraph graph = CvrpGraph.getGraphByName("test");
+				CvrpGraph.createCvrpGraph(graphName, "debug test",  800, 800, 32);
+				CvrpGraph graph = CvrpGraph.getGraphByName(graphName);
 				
 				long mls = System.currentTimeMillis();
 				LOGGER.info("Generating graph...");
 				
-				CapacityGraphGenerator.generateCvrpGraph(graph, 10, 10, 50, 10, 100, 0.5f);
+				CapacityGraphGenerator.generateCvrpGraph(graph, nodes, 0, 0, 10, 50, 0.1f);
 				
 				mls = System.currentTimeMillis() - mls;
 				LOGGER.info("Generating completed in " + Calc.mlsToHms(mls) + ". Milliseconds: " + mls);
-				
-				break;
-				
-			case 1: 
-				graph = CvrpGraph.getGraphByName("test");
-				GraphRenderer.writeCvrpImage(graph);
-				break;
-			
-			case 2:
-				graph = CvrpGraph.getGraphByName("test");
-				GraphRenderer.writeCvrpImageWithCosts(graph);
-				break;
-			
-			case 3:
-				graph = CvrpGraph.getGraphByName("test");
-				
-				ClarkeWright.baseCvrp(graph, 100, ClarkeWright.CLARKE_WRIGHT_SQUENTIAL);
-				GraphRenderer.writeCvrpImage(graph);
-				break;
-				
-			case 4:
-				graph = CvrpGraph.getGraphByName("test");
+				LOGGER.info("Reloading Graph");
+				graph = CvrpGraph.getGraphByName(graphName);
 				
 				ClarkeWright.oopCvrp(graph, 100);
+				LOGGER.info(graph.getRoutes().toString());
+				
+				GraphRenderer.writeCvrpImage(graph);
 				
 				break;
 				
+			case 1:
+				graph = CvrpGraph.getGraphByName(graphName);
+				ClarkeWright.oopCvrp(graph, vehicleCapacity);
+				GraphRenderer.writeCvrpImage(graph);
+				LOGGER.info(graph.getRoutes().toString());
+				
+				break;
+				
+			case 2:
+				graph = CvrpGraph.getGraphByName(graphName);
+				GraphRenderer.writeCvrpImage(graph);
+				break;
 				default: break;
 			}
 			

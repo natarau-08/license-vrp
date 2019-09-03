@@ -2,11 +2,13 @@ package algorithm;
 
 import static main.Main.LOGGER;
 
-import java.util.Comparator;
 import java.util.LinkedList;
 
+import database.obj.cvrp.CvrpArc;
+import database.obj.cvrp.CvrpCost;
 import database.obj.cvrp.CvrpGraph;
 import database.obj.cvrp.CvrpNode;
+import database.obj.cvrp.CvrpReduction;
 import utils.Calc;
 
 /**
@@ -27,7 +29,7 @@ public class ClarkeWright {
 	 * @param alg
 	 * @throws Exception
 	 */
-	public static void baseCvrp(CvrpGraph graph, int truckCapacity, int alg) throws Exception{
+	public static void basicCvrp(CvrpGraph graph, int truckCapacity, int alg) throws Exception{
 		int[][][] simpl = GraphParser.parseCvrpGraph(graph);
 		int n = graph.getNodeCount();
 		int[][] nodes = simpl[0];
@@ -108,15 +110,154 @@ public class ClarkeWright {
 		
 		//TODO
 		
-		long t1 = System.currentTimeMillis() - t0;
-		LOGGER.info("Clarke-Wright solution computed in " + Calc.mlsToHms(t1));
+		long deltaT = System.currentTimeMillis() - t0;
+		LOGGER.info("Time Passed: " + Calc.mlsToHms(deltaT) + "\nmls: " + deltaT);
 	}
 
 	public static void oopCvrp(CvrpGraph graph, int vehicleCapacity) {
 		//fetching demands
 		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
-		nodes.sort((CvrpNode n1, CvrpNode n2) -> n2.getDemand() - n1.getDemand());
+		LinkedList<CvrpCost> costs = graph.getCostsAsList();
+		LinkedList<CvrpReduction> reductions = new LinkedList<>();
 		
+		int[] nodesIds = new int[nodes.size()];
+		int depId = graph.getDepot().getId();
 		
+		for(int i=0;i<nodesIds.length;i++) {
+			nodesIds[i] = nodes.get(i).getId();
+		}
+		
+		LOGGER.info("Computing Clarke-Wright OOP variant.");
+		long t0 = System.currentTimeMillis();
+		
+		String log = "";
+		
+		for(CvrpNode n: nodes) {
+			log += String.format("%s, ", n.toString());
+		}
+		LOGGER.info("Nodes list nodeId(demand):\n" + log);
+		
+		log = "";
+		for(CvrpCost c: costs) {
+			log += String.format("%s, ", c.toString());
+		}
+		LOGGER.info("Cost list:\n" + log);
+		LOGGER.info("Computing reduction list...");
+		log = "";
+		for(int i=0;i<nodesIds.length-1;i++) {
+			for(int j=0;j<nodesIds.length;j++) {
+				if(i < j && nodesIds[i] != depId && nodesIds[j] != depId) {
+					LOGGER.info(String.format("Computing reduction for pair (%d, %d)", nodesIds[i], nodesIds[j]));
+					CvrpReduction red = new CvrpReduction(new CvrpArc(nodesIds[i], nodesIds[j]));
+					if(red.getValue() > 0) {
+						reductions.add(red);
+						log += red.toString() + ", ";
+					}
+				}
+			}
+		}
+		
+		LOGGER.info("Reductions:\n" + log);
+		LOGGER.info("Sorting reductions: ");
+		reductions.sort((a, b) -> b.getValue() - a.getValue());
+		LOGGER.info(reductions.toString());
+		
+		int load = 0;
+		LinkedList<Integer> route = new LinkedList<>();
+		LinkedList<CvrpReduction> toRemove = new LinkedList<>();
+		while(!reductions.isEmpty()) {
+			
+			//removing added reductions
+			for(CvrpReduction r: toRemove) {
+				reductions.removeIf(p -> (
+						(p.getNode(0).getId() == r.getNode(0).getId()) || 
+						(p.getNode(0).getId() == r.getNode(1).getId()) ||
+						(p.getNode(1).getId() == r.getNode(0).getId()) ||
+						(p.getNode(1).getId() == r.getNode(1).getId())
+						));
+			}
+			
+			toRemove.clear();
+			
+			for(CvrpReduction r: reductions) {
+				
+				/*conditions for adding reduction's nodes
+					* vehicle can support the additional load
+					* if route is not new, the reduction must have a node that is a margin of current route 
+				*/
+				
+				int id0 = r.getNode(0).getId();
+				int id1 = r.getNode(1).getId();
+				
+				int dem0 = r.getNode(0).getDemand();
+				int dem1 = r.getNode(1).getDemand();
+				
+				if(load == 0) {
+					LOGGER.info("Creating new route");
+					
+					if(dem0 + dem1 <= vehicleCapacity && !graph.getRoutes().contains(id0) && !graph.getRoutes().contains(id1)) {
+						route.add(id0);
+						route.add(id1);
+						toRemove.add(r);
+						load += dem0 + dem1;
+						
+						if(reductions.size() == 1) {
+							route.add(depId);
+							route.addFirst(depId);
+							graph.getRoutes().addAll(route);
+							route.clear();
+						}
+					}
+					
+					continue;
+					
+				}
+				
+				int routeFirst = route.getFirst();
+				int routeLast = route.getLast();
+				
+				//take out reductions that contain as nodes the end and the beginning of route
+				//maybe using more ifs is better
+				if(r.getArc().equals(new CvrpArc(routeFirst, routeLast))) {
+					toRemove.add(r);
+					continue;
+				}
+				
+				if(load + dem0 <= vehicleCapacity) {
+					if(routeFirst == id1 && !graph.getRoutes().contains(id0)) {
+						route.addFirst(id0);
+						load += dem0;
+						toRemove.add(r);
+					}else if (routeLast == id1 && !graph.getRoutes().contains(id0)) {
+						route.addLast(id0);
+						load += dem0;
+						toRemove.add(r);
+					}
+				}else if (load + dem1 <= vehicleCapacity) {
+					if(routeFirst == id0 && !graph.getRoutes().contains(id1)) {
+						route.addFirst(id1);
+						load += dem1;
+						toRemove.add(r);
+					}else if(routeLast == id0 && !graph.getRoutes().contains(id1)) {
+						route.add(id1);
+						load += dem1;
+						toRemove.add(r);
+					}
+				}
+				
+				if(r == reductions.getLast()) {
+					route.add(depId);
+					route.addFirst(depId);
+					graph.getRoutes().addAll(route);
+					route.clear();
+					load = 0;
+				}
+				
+			}
+		}
+		
+		long deltaT = System.currentTimeMillis() - t0;
+		LOGGER.info("Time passed: " + Calc.mlsToHms(deltaT) + "\nmls:" + deltaT);
 	}
+	
 }

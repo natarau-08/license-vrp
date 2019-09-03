@@ -1,3 +1,5 @@
-Needs Completion
+#Solving the Vehicle Routing Problem
 
-no content
+### Bugs to not forget
+* **Exception when generating graph with random costs(not distance)**<br>
+Maybe I will not fix, maybe I will.

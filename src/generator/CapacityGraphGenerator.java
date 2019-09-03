@@ -1,5 +1,7 @@
 package generator;
 
+import static main.Main.LOGGER;
+
 import java.sql.ResultSet;
 import java.util.LinkedList;
 import java.util.Random;
@@ -9,7 +11,6 @@ import database.SqliteConnection;
 import database.obj.cvrp.CvrpGraph;
 import utils.Calc;
 import utils.Point;
-import static main.Main.LOGGER;
 
 public class CapacityGraphGenerator {
 	
@@ -37,8 +38,6 @@ public class CapacityGraphGenerator {
 	 * @param minDemand -
 	 * @param maxDemand -
 	 * @param distMultiplier - [draw] how much of the distance is added to the cost 
-	 * @param spreadX - [draw] from 0 to right
-	 * @param spreadY - [draw]
 	 * @throws Exception  if anything goes wrong. Bad practice.
 	 * 
 	 */
@@ -130,10 +129,17 @@ public class CapacityGraphGenerator {
 				double dist = Calc.dist(r, s);
 				int toAdd = (int)(dist * distMultiplier);
 				
-				if(toAdd > minCost) {
-					toAdd = minCost;
+//				if(toAdd > minCost) {
+//					toAdd = minCost;
+//				}
+				
+				int costValue = 0;
+				if(minCost > 0) {
+					costValue = minCost - toAdd + rand.nextInt(maxCost - minCost + toAdd);
+				}else {
+					costValue = toAdd;
 				}
-				int costValue = minCost - toAdd + rand.nextInt(maxCost - minCost + toAdd);
+					
 				
 				insertCost.executeWith(costValue, gId, s.z, r.z);
 				
