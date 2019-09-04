@@ -1,6 +1,4 @@
 package database.obj.cvrp;
-
-import java.util.HashMap;
 import static database.obj.cvrp.CvrpGraph.GRAPH;
 
 public class CvrpReduction {
@@ -9,21 +7,23 @@ public class CvrpReduction {
 	private CvrpArc arc;
 	
 	public CvrpReduction(CvrpArc arc) {
-		
 		this.arc = arc;
-		HashMap<CvrpArc, CvrpCost> costs = GRAPH.getCosts();
+		calcValue();
+	}
+	
+	public CvrpReduction(int id1, int id2) {
+		this.arc = new CvrpArc(id1, id2);
+		calcValue();
+	}
+	
+	private void calcValue() {
 		int depId = GRAPH.getDepot().getId();
-		int n1Id = arc.getNodeId(0);
-		int n2Id = arc.getNodeId(1);
-		
-		//costs from depot to first node and back + cost from depot to second node and back
-		int sepCost = costs.get(new CvrpArc(depId, n1Id)).getCost() * 2 + costs.get(new CvrpArc(depId, n2Id)).getCost() * 2;
-		
-		//cost fro depot to first node + cost from first node to second node + cost from second node to depot
-		int redCost = costs.get(new CvrpArc(depId, n1Id)).getCost() + costs.get(new CvrpArc(n1Id, n2Id)).getCost() + costs.get(new CvrpArc(n2Id, depId)).getCost();
-		
-		//reduction is sepCost - redCost (should always be positive)
-		value = sepCost - redCost;
+		/**
+		 * reduction value is c_di + c_jd - c_ij
+		 */
+		value = GRAPH.getCosts().get(new CvrpArc(depId, arc.getNodeId(0))).getCost() + 
+				GRAPH.getCosts().get(new CvrpArc(depId, arc.getNodeId(1))).getCost() -
+				GRAPH.getCosts().get(new CvrpArc(arc.getNodeId(1), arc.getNodeId(0))).getCost();
 	}
 	
 	public int getValue() {

@@ -29,7 +29,7 @@ public class CvrpGraph {
 	
 	private HashMap<Integer, CvrpNode> nodes;
 	private HashMap<CvrpArc, CvrpCost> costs;
-	private LinkedList<Integer> routes;
+	private LinkedList<CvrpRoute> routes;
 	
 	private CvrpNode depot;
 	 
@@ -98,7 +98,7 @@ public class CvrpGraph {
 		return costs;
 	}
 	
-	public LinkedList<Integer> getRoutes(){
+	public LinkedList<CvrpRoute> getRoutes(){
 		return routes;
 	}
 	

@@ -30,16 +30,20 @@ public class Main {
 			
 			SqliteConnection.init();
 			
-			int a = 0;
-			int vehicleCapacity = 100;
+			int a = 1;
+			int vehicleCapacity = 200;
 			int nodes = 20;
-			int width = 1600, height = 800;
-			String graphName = "test";
+			int width = 1200, height = 800;
+			String graphName = "generated0";
 			
 			//SqliteManager.clearDatabase();
 			switch(a) {
-			case 0:
+			case -1:
 				SqliteManager.clearDatabase();
+				break;
+			case 0:
+				
+				//SqliteManager.clearDatabase();
 				CvrpGraph.createCvrpGraph(graphName, "debug test",  width, height, 32);
 				CvrpGraph graph = CvrpGraph.getGraphByName(graphName);
 				
@@ -53,24 +57,32 @@ public class Main {
 				LOGGER.info("Reloading Graph");
 				graph = CvrpGraph.getGraphByName(graphName);
 				
-				ClarkeWright.oopCvrp(graph, 100, ClarkeWright.CLARKE_WRIGHT_SQUENTIAL);
-				LOGGER.info(graph.getRoutes().toString());
+				ClarkeWright.computeClarkeWrightSolution(graph, vehicleCapacity, ClarkeWright.CLARKE_WRIGHT_PARALLEL, ClarkeWright.CLARKE_WRIGHT_OOP_APPROACH);
 				
-				GraphRenderer.writeCvrpImage(graph);
+				LOGGER.info(graph.getRoutes().toString());
+				GraphRenderer.writeCvrpImage(graph, "par");
 				
 				break;
 				
 			case 1:
 				graph = CvrpGraph.getGraphByName(graphName);
-				ClarkeWright.oopCvrp(graph, vehicleCapacity, ClarkeWright.CLARKE_WRIGHT_SQUENTIAL);
-				GraphRenderer.writeCvrpImage(graph);
+				ClarkeWright.computeClarkeWrightSolution(graph, vehicleCapacity, ClarkeWright.CLARKE_WRIGHT_PARALLEL, ClarkeWright.CLARKE_WRIGHT_OOP_APPROACH);
+				GraphRenderer.writeCvrpImage(graph, "par");
 				LOGGER.info(graph.getRoutes().toString());
 				
 				break;
 				
 			case 2:
 				graph = CvrpGraph.getGraphByName(graphName);
-				GraphRenderer.writeCvrpImage(graph);
+				//TODO
+				GraphRenderer.writeCvrpImage(graph, "par");
+				LOGGER.info(graph.getRoutes().toString());
+				
+				break;
+				
+			case 3:
+				graph = CvrpGraph.getGraphByName(graphName);
+				GraphRenderer.writeCvrpImage(graph, "none");
 				break;
 				default: break;
 			}

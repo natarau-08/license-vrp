@@ -1,5 +1,5 @@
 --SELECT * FROM cvrp_graphs;
-INSERT INTO cvrp_graphs (name, description, width, height, mdist) VALUES ("test", "testc", 800, 800, 32);
+INSERT INTO cvrp_graphs (name, description, width, height, mdist) VALUES ("example", "testc", 800, 800, 32);
 
 --SELECT * FROM cvrp_nodes;
 
@@ -32,6 +32,6 @@ INSERT INTO cvrp_costs (graph, node1, node2, val) VALUES (1, 4, 6, 27);
 
 INSERT INTO cvrp_costs (graph, node1, node2, val) VALUES (1, 5, 6, 25);
 
-SELECT * FROM cvrp_graphs;
-SELECT * FROM cvrp_nodes;
-SELECT * FROM cvrp_costs;
+--SELECT * FROM cvrp_graphs;
+--SELECT * FROM cvrp_nodes;
+--SELECT * FROM cvrp_costs;

@@ -17,6 +17,8 @@ import database.obj.cvrp.CvrpArc;
 import database.obj.cvrp.CvrpCost;
 import database.obj.cvrp.CvrpGraph;
 import database.obj.cvrp.CvrpNode;
+import database.obj.cvrp.CvrpRoute;
+import static main.Main.LOGGER;
 
 public class GraphRenderer {
 
@@ -31,28 +33,35 @@ public class GraphRenderer {
 		g.fillRect(0, 0, img.getWidth(), img.getHeight());
 		
 		//drawing arcs
-		LinkedList<Integer> ids = graph.getRoutes();
-		int lastId = -1;
-		for(Integer id: ids) {
+		LinkedList<CvrpRoute> routes = graph.getRoutes();
+		LOGGER.info("Drawing routes\n" + routes);
+		CvrpNode dep = graph.getDepot();
+		for(CvrpRoute r: routes) {
+			LOGGER.info("Drawing route\n" + r);
+			CvrpNode prev = null;
 			
-			if(lastId == -1) {
-				lastId = id;
-				continue;
+			for(Integer i: r.getNodes()) {
+				
+				CvrpNode n = graph.getNodes().get(i);
+				
+				if(i == r.getFirst()) {
+					LOGGER.info("Route's first node is " + n);
+					g.setColor(Color.black);
+					g.drawLine(n.getX(), n.getY(), dep.getX(), dep.getY());
+					
+					prev = n;
+					continue;
+				}
+				
+				g.setColor(Color.BLACK);
+				g.drawLine(n.getX(), n.getY(), prev.getX(), prev.getY());
+				prev = n;
+				
+				if(i == r.getNodes().getLast()) {
+					g.drawLine(n.getX(), n.getY(), dep.getX(), dep.getY());
+				}
 			}
 			
-			CvrpNode n1 = graph.getNodes().get(lastId);
-			CvrpNode n2 = graph.getNodes().get(id);
-			
-			lastId = id;
-			
-			int x1 = n1.getX();
-			int y1 = n1.getY();
-			
-			int x2 = n2.getX();
-			int y2 = n2.getY();
-			
-			g.setColor(Color.BLACK);
-			g.drawLine(x1, y1, x2, y2);
 		}
 		
 		int radius = graph.getMinDist()/2;
@@ -87,13 +96,9 @@ public class GraphRenderer {
 		return background;
 	}
 	
-	public static void writeImage(BufferedImage image) throws IOException{
-		ImageIO.write(image, "png", new File("test.png"));
-	}
-	
-	public static void writeCvrpImage(CvrpGraph graph) throws IOException{
+	public static void writeCvrpImage(CvrpGraph graph, String path) throws IOException{
 		BufferedImage image = renderCvrpGraph(graph);
-		ImageIO.write(image, "png", new File("test.png"));
+		ImageIO.write(image, "png", new File(path + ".png"));
 	}
 	
 	private static void renderCvrpCosts(CvrpGraph graph, BufferedImage image) {
@@ -113,10 +118,10 @@ public class GraphRenderer {
 		}
 	}
 	
-	public static void writeCvrpImageWithCosts(CvrpGraph graph) throws IOException{
+	public static void writeCvrpImageWithCosts(CvrpGraph graph, String path) throws IOException{
 		BufferedImage image = renderCvrpGraph(graph);
 		renderCvrpCosts(graph, image);
-		writeImage(image);
+		ImageIO.write(image, "png", new File(path + ".png"));
 	}
 	
 	private static void drawNodeInfo(Graphics2D g, CvrpNode node, int radius) {

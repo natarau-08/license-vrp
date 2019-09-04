@@ -1,5 +1,4 @@
-#Solving the Vehicle Routing Problem
+###Solving the Vehicle Routing Problem
 
-### Bugs to not forget
-* **Exception when generating graph with random costs(not distance)**<br>
-Maybe I will not fix, maybe I will.
+having a hard time solving it
+* generated0 graph offers a solution in which a node is visited twice in the second route. Why?
