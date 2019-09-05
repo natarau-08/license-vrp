@@ -2,17 +2,13 @@ package algorithm;
 
 import static main.Main.LOGGER;
 
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 
-import database.obj.cvrp.CvrpArc;
-import database.obj.cvrp.CvrpCost;
 import database.obj.cvrp.CvrpGraph;
 import database.obj.cvrp.CvrpNode;
 import database.obj.cvrp.CvrpReduction;
 import database.obj.cvrp.CvrpRoute;
-import utils.Calc;
+import utils.Clock;
 
 /**
  * Compute Clarke-Wright solution for a graph object.
@@ -22,15 +18,13 @@ import utils.Calc;
  */
 public class ClarkeWright {
 	
-	public static final int CLARKE_WRIGHT_SQUENTIAL = 0;
+	public static final int CLARKE_WRIGHT_SEQUENTIAL = 0;
 	public static final int CLARKE_WRIGHT_PARALLEL = 1;
-	
-	public static final int CLARKE_WRIGHT_OOP_APPROACH = 1;
 	
 	private static CvrpGraph graph;
 	private static int maxLoad;
 	
-	public static void computeClarkeWrightSolution(CvrpGraph graph, int vehicleCapacity, int algorithm, int approach) {
+	public static void computeClarkeWrightSolution(CvrpGraph graph, int vehicleCapacity, int algorithm) {
 		ClarkeWright.graph = graph;
 		maxLoad = vehicleCapacity;
 		
@@ -41,7 +35,7 @@ public class ClarkeWright {
 		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
 		
 		LOGGER.info("Computing reductions");
-		long start = System.currentTimeMillis();
+		Clock.initClock();
 		
 		for(int i=0;i<nodes.size()-1;i++) {
 			for(int j=i+1;j<nodes.size();j++) {
@@ -51,8 +45,12 @@ public class ClarkeWright {
 				if(id1 == graph.getDepot().getId() || id2 == graph.getDepot().getId() || id1 == id2) {
 					continue;
 				}
-				
-				reductions.add(new CvrpReduction(id1, id2));
+				CvrpReduction red = new CvrpReduction(id1, id2);
+				if(red.getValue() <= 0) {
+					//LOGGER.severe("Reduction " + red + " has negative value? How is it possible?\nPossibly from converting double to int\nWill not be added");
+					continue;
+				}
+				reductions.add(red);
 			}
 		}
 		
@@ -61,23 +59,110 @@ public class ClarkeWright {
 		reductions.sort((a, b) -> b.getValue() - a.getValue());
 		
 		LOGGER.info("Sorting reductions: \n" + reductions);
-		
-		
-		if(approach == CLARKE_WRIGHT_OOP_APPROACH) {
 			
-			if(algorithm == CLARKE_WRIGHT_PARALLEL) {
-				compCWoopPar(nodes, reductions, routes);
-				
-			}
+		if(algorithm == CLARKE_WRIGHT_PARALLEL) {
+			compCWoopPar(nodes, reductions, routes);
+			
+		}else if(algorithm == CLARKE_WRIGHT_SEQUENTIAL) {
+			compCWoopSeq(nodes, reductions, routes);
 		}
 		
-		long delta = System.currentTimeMillis() - start;
-		LOGGER.info("Algorithm completed with solution:\n" + routes + "\nin " + Calc.mlsToHms(delta) + "\tmillis: " + delta);
+		LOGGER.info("Algorithm completed with solution:\n" + routes + "\nin " + Clock.dumpClock());
 		
 		//adding routes to graph
 		graph.getRoutes().addAll(routes);
 	}
 	
+	private static void compCWoopSeq(LinkedList<CvrpNode> nodes, LinkedList<CvrpReduction> reductions,
+			LinkedList<CvrpRoute> routes) {
+		
+		LinkedList<CvrpReduction> toRemove = new LinkedList<>();
+		LinkedList<CvrpRoute> inRoutes = new LinkedList<>();
+		
+		CvrpRoute currentRoute;
+		
+		while(!reductions.isEmpty()) {
+			
+			
+			currentRoute = new CvrpRoute();
+			
+			for(CvrpReduction r: toRemove) {
+				reductions.remove(r);
+			}
+			
+			toRemove.clear();
+			
+			for(CvrpReduction r: reductions) {
+				
+				int node0 = r.getNode(0).getId();
+				int node1 = r.getNode(1).getId();
+				
+				int dem0 = r.getNode(0).getDemand();
+				int dem1 = r.getNode(1).getDemand();
+				
+				
+				inRoutes.clear();
+				
+				for(CvrpRoute route: routes) {
+					if(routeContains(node0, node1, route)) {
+						inRoutes.add(route);
+					}
+				}
+				
+				if(routeContains(node0, node1, currentRoute)) {
+					inRoutes.add(currentRoute);
+				}
+				
+				if(inRoutes.size() == 0 && currentRoute.getNodes().isEmpty()) {
+					
+					if(dem0 + dem1 < maxLoad) {
+						currentRoute.add(node0);
+						currentRoute.add(node1);
+						toRemove.add(r);
+					}
+					continue;
+				}
+				
+				switch(inRoutes.size()) {
+				case 0:
+					continue;
+					
+				case 1:
+					addNodesToRoute(node0, node1, inRoutes.getFirst());
+					break;
+					
+				case 2:
+					//mergeRoutes(inRoutes.getFirst(), inRoutes.getLast());
+					break;
+				
+				default:
+					LOGGER.info("More than two routes? Impossible!");
+					break;
+				}
+				
+				toRemove.add(r);
+				
+			}
+			
+			if(!currentRoute.getNodes().isEmpty())
+				routes.add(currentRoute);
+		}
+		
+		for(CvrpNode n: nodes) {
+			boolean found = false;
+			for(CvrpRoute r: routes) {
+				if(r.getNodes().contains(n.getId())) {
+					found = true;
+					break;
+				}
+			}
+			
+			if(!found) {
+				routes.add(new CvrpRoute(n.getId()));
+			}
+		}
+	}
+
 	private static void compCWoopPar(LinkedList<CvrpNode> nodes, LinkedList<CvrpReduction> reductions, LinkedList<CvrpRoute> routes) {
 		
 		LinkedList<CvrpRoute> inRoutes = new LinkedList<>();
@@ -118,11 +203,13 @@ public class ClarkeWright {
 			//is a fault
 			switch(inRoutes.size()) {
 				case 1:
-					addNodeToRoute(rid0, rid1, inRoutes.getFirst());
+					addNodesToRoute(rid0, rid1, inRoutes.getFirst());
 					break;
 				
 				case 2:
-					inRoutes.getFirst().mergeRoute(inRoutes.getLast(), maxLoad);
+					LOGGER.info("Attempting to merge " + inRoutes.getFirst() + " with " + inRoutes.getLast() + "\nReduction:" + r);
+					if(mergeRoutes(inRoutes.getFirst(), inRoutes.getLast()))
+						LOGGER.info("-----------------------------------------------------------------Merged two routes");
 					break;
 				
 				default:
@@ -130,7 +217,6 @@ public class ClarkeWright {
 					break;
 			}
 			
-			//clean "inRoutes"
 			inRoutes.clear();
 		}
 		
@@ -167,7 +253,7 @@ public class ClarkeWright {
 	 * @param rou
 	 * @return - true if node was added
 	 */
-	private static boolean addNodeToRoute(int n1, int n2, CvrpRoute rou) {
+	private static boolean addNodesToRoute(int n1, int n2, CvrpRoute rou) {
 		int routeFirst = rou.getFirst();
 		int routeLast = rou.getLast();
 		
@@ -206,44 +292,49 @@ public class ClarkeWright {
 		
 		return false;
 	}
-	
+
 	/**
-	 * removes all reductions that have at least one common node referenced in toRemove list.
-	 * How it works:
-	 * <ul>
-	 * 	<li>Compare every object <b>o</b> from <em>reductionList</em> 
-	 * with every object <b>p</b> from <em>toRemove</em> list</li>
-	 * 	<li>If <b>o</b> has at least one node equal to a node of <b>p</b>
-	 * then, remove <b>o</b> from its list</li>
-	 * <li>After all <b>o</b>'s are removed, clear <em>toRemove</em></li>
-	 * </ul>
-	 * @param reductions - reductions list
-	 * @param toRemove - reductions to remove
+	 * Attempts to merge this route with another route. 
+	 * It fails if the routes have no common nodes(first or last). 
+	 * It fails if the quantity exceeds vehicleCapacity. 
+	 * @param r - the other route
+	 * @param vehicleCapacity
+	 * @return - true if merging was successful, false otherwise
 	 */
-	private static void removeReductions(LinkedList<CvrpReduction> reductions, LinkedList<CvrpReduction> toRemove) {
-		for(CvrpReduction r: toRemove) {
-			reductions.removeIf(p -> (
-					(p.getNode(0).getId() == r.getNode(0).getId()) || 
-					(p.getNode(0).getId() == r.getNode(1).getId()) ||
-					(p.getNode(1).getId() == r.getNode(0).getId()) ||
-					(p.getNode(1).getId() == r.getNode(1).getId())
-					));
+	public static boolean mergeRoutes(CvrpRoute r1, CvrpRoute r2) {
+		if(r1.getLoad() + r2.getLoad() > maxLoad) {
+			LOGGER.info("Merge failed: " + r1.getLoad() + " + " + r2.getLoad() + " = " + (r1.getLoad() + r2.getLoad()) + " > " + maxLoad);
+			return false;
 		}
 		
-		toRemove.clear();
+		int r1f = r1.getFirst();
+		int r1l = r1.getLast();
+		
+		int r2f = r2.getFirst();
+		int r2l = r2.getLast();
+		
+		if(r1f == r2f) {
+			r2.getNodes().removeFirst();
+			r1.getNodes().addAll(r2.getNodes());
+		}else if(r1f == r2l) {
+			r2.getNodes().removeLast();
+			while(!r2.getNodes().isEmpty()) {
+				r1.getNodes().addFirst(r2.getNodes().removeLast());
+			}
+		}else if(r1l == r2f) {
+			r2.getNodes().removeFirst();
+			r1.getNodes().addAll(r2.getNodes());
+		}else if(r1l == r2l) {
+			r2.getNodes().removeLast();
+			while(!r2.getNodes().isEmpty()) {
+				r1.getNodes().add(r2.getNodes().removeLast());
+			}
+		}else {
+			LOGGER.info("Merge failed: reduction connects one or two nodes that are inside the route");
+			return false;
+		}
+		
+		r1.setLoad(r1.getLoad() + r2.getLoad());
+		return true;
 	}
-
-//	/**
-//	 * See {@link #removeReductions(LinkedList, LinkedList)}
-//	 * @param reductions
-//	 * @param toRemove
-//	 */
-//	private static void removeReduction(LinkedList<CvrpReduction> reductions, CvrpReduction toRemove) {
-//		reductions.removeIf(p -> (
-//				(p.getNode(0).getId() == toRemove.getNode(0).getId()) || 
-//				(p.getNode(0).getId() == toRemove.getNode(1).getId()) ||
-//				(p.getNode(1).getId() == toRemove.getNode(0).getId()) ||
-//				(p.getNode(1).getId() == toRemove.getNode(1).getId())
-//				));
-//	}
 }

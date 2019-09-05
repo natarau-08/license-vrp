@@ -6,12 +6,13 @@ import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
 import algorithm.ClarkeWright;
+import algorithm.Greedy;
 import database.SqliteConnection;
 import database.SqliteManager;
 import database.obj.cvrp.CvrpGraph;
 import generator.CapacityGraphGenerator;
 import renderer.GraphRenderer;
-import utils.Calc;
+import utils.Clock;
 
 public class Main {
 
@@ -30,7 +31,7 @@ public class Main {
 			
 			SqliteConnection.init();
 			
-			int a = 0;
+			int a = 3;
 			int vehicleCapacity = 200;
 			int nodes = 20;
 			int width = 1200, height = 800;
@@ -47,17 +48,17 @@ public class Main {
 				CvrpGraph.createCvrpGraph(graphName, "debug test",  width, height, 32);
 				CvrpGraph graph = CvrpGraph.getGraphByName(graphName);
 				
-				long mls = System.currentTimeMillis();
+				Clock.initClock();
 				LOGGER.info("Generating graph...");
 				
 				CapacityGraphGenerator.generateCvrpGraph(graph, nodes, 0, 0, 10, 50, 0.1f);
 				
-				mls = System.currentTimeMillis() - mls;
-				LOGGER.info("Generating completed in " + Calc.mlsToHms(mls) + ". Milliseconds: " + mls);
+				LOGGER.info("Generating completed in " + Clock.dumpClock());
 				LOGGER.info("Reloading Graph");
 				graph = CvrpGraph.getGraphByName(graphName);
 				
-				ClarkeWright.computeClarkeWrightSolution(graph, vehicleCapacity, ClarkeWright.CLARKE_WRIGHT_PARALLEL, ClarkeWright.CLARKE_WRIGHT_OOP_APPROACH);
+				ClarkeWright.computeClarkeWrightSolution(graph, vehicleCapacity, 
+						ClarkeWright.CLARKE_WRIGHT_PARALLEL);
 				
 				LOGGER.info(graph.getRoutes().toString());
 				GraphRenderer.writeCvrpImage(graph, "par");
@@ -66,7 +67,8 @@ public class Main {
 				
 			case 1:
 				graph = CvrpGraph.getGraphByName(graphName);
-				ClarkeWright.computeClarkeWrightSolution(graph, vehicleCapacity, ClarkeWright.CLARKE_WRIGHT_PARALLEL, ClarkeWright.CLARKE_WRIGHT_OOP_APPROACH);
+				ClarkeWright.computeClarkeWrightSolution(graph, vehicleCapacity, 
+						ClarkeWright.CLARKE_WRIGHT_PARALLEL);
 				GraphRenderer.writeCvrpImage(graph, "par");
 				LOGGER.info(graph.getRoutes().toString());
 				
@@ -74,15 +76,17 @@ public class Main {
 				
 			case 2:
 				graph = CvrpGraph.getGraphByName(graphName);
-				//TODO
-				GraphRenderer.writeCvrpImage(graph, "par");
+				ClarkeWright.computeClarkeWrightSolution(graph, vehicleCapacity, 
+						ClarkeWright.CLARKE_WRIGHT_SEQUENTIAL);
+				GraphRenderer.writeCvrpImage(graph, "seq");
 				LOGGER.info(graph.getRoutes().toString());
 				
 				break;
 				
 			case 3:
 				graph = CvrpGraph.getGraphByName(graphName);
-				GraphRenderer.writeCvrpImage(graph, "none");
+				Greedy.computeGreedySolution(graph, vehicleCapacity);
+				GraphRenderer.writeCvrpImage(graph, "greedy");
 				break;
 				default: break;
 			}

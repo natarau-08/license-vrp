@@ -6,17 +6,14 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.Map;
 
 import javax.imageio.ImageIO;
 
-import database.obj.cvrp.CvrpArc;
-import database.obj.cvrp.CvrpCost;
 import database.obj.cvrp.CvrpGraph;
 import database.obj.cvrp.CvrpNode;
 import database.obj.cvrp.CvrpRoute;
@@ -25,8 +22,22 @@ import utils.Point;
 
 public class GraphRenderer {
 
+	/**
+	 * The space between node string and node geometry
+	 */
+	public static final int NODE_INFO_DELTA_Y = 5;
+	public static int renderPadding = 30;
+	
+	//for getting the font width and height
+	private static final BufferedImage temp = new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR);
+	private static final Graphics2D g = (Graphics2D) temp.getGraphics();
+	
 	public static BufferedImage renderCvrpGraph(CvrpGraph graph) {
-		BufferedImage img = new BufferedImage(graph.getWidth(), graph.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
+		
+		BufferedImage routesImg = renderGraphInfo(graph);
+		
+		BufferedImage img = new BufferedImage(graph.getWidth() + renderPadding , 
+				graph.getHeight() + renderPadding + routesImg.getHeight() + 20, BufferedImage.TYPE_3BYTE_BGR);
 		
 		Graphics2D g = (Graphics2D) img.getGraphics();
 		
@@ -34,6 +45,13 @@ public class GraphRenderer {
 		
 		g.setColor(Color.WHITE);
 		g.fillRect(0, 0, img.getWidth(), img.getHeight());
+		
+		//offset everything
+		AffineTransform offsetTransform = AffineTransform.getTranslateInstance(renderPadding/2, renderPadding/2);
+		g.setTransform(offsetTransform);
+		
+		g.setColor(Color.GRAY);
+		g.drawRect(0, 0, graph.getWidth(), graph.getHeight());
 		
 		//drawing routes
 		LinkedList<CvrpRoute> routes = graph.getRoutes();
@@ -100,7 +118,10 @@ public class GraphRenderer {
 			drawNodeInfo(g, n, radius);
 		}
 		
-		BufferedImage background = new BufferedImage(graph.getWidth() + 2, graph.getHeight() + 2, BufferedImage.TYPE_3BYTE_BGR);
+		//drawing routes string
+		g.drawImage(routesImg, 0, img.getHeight() - routesImg.getHeight() - renderPadding, null);
+		
+		BufferedImage background = new BufferedImage(img.getWidth() + 2, img.getHeight() + 2, BufferedImage.TYPE_3BYTE_BGR);
 		g = (Graphics2D) background.getGraphics();
 		g.setColor(Color.BLACK);
 		g.drawRect(0, 0, background.getWidth(), background.getHeight());
@@ -109,32 +130,87 @@ public class GraphRenderer {
 		return background;
 	}
 	
-	public static void writeCvrpImage(CvrpGraph graph, String path) throws IOException{
-		BufferedImage image = renderCvrpGraph(graph);
-		ImageIO.write(image, "png", new File(path + ".png"));
-	}
-	
-	private static void renderCvrpCosts(CvrpGraph graph, BufferedImage image) {
-		Graphics2D g = (Graphics2D) image.getGraphics();
+	private static BufferedImage renderGraphInfo(CvrpGraph graph) {
+		final int padding = 10;
+		int maxStrWidth = graph.getWidth() - padding;
 		
-		HashMap<CvrpArc, CvrpCost> costs = graph.getCosts();
-		for (Map.Entry<CvrpArc, CvrpCost> entry : costs.entrySet()) {
+		LinkedList<String> routes = new LinkedList<>();
+		for(CvrpRoute r: graph.getRoutes()) {
 			
-			CvrpNode node1 = entry.getValue().getNode(0);
-			CvrpNode node2 = entry.getValue().getNode(1);
+			String routeString = r.toString();
 			
-			int x = (node1.getX() + node2.getX()) / 2;
-			int y = (node1.getY() + node2.getY()) / 2;
+			if(routes.isEmpty()) {
+				if(strWidth(routeString) <= maxStrWidth) {
+					routes.add(routeString);
+					
+				}else {
+					renderGraphInfo_splitRoute(routeString, routes, maxStrWidth);
+				}
+				
+				continue;
+			}
 			
-			g.setColor(Color.BLACK);
-			g.drawString("" + entry.getValue().getValue(), x, y);
+			if(strWidth(routes.getLast() + ", " + routeString) <= maxStrWidth) {
+				String last = routes.removeLast();
+				routes.add(last + ", " + routeString);
+			}else {
+				if(strWidth(routeString) > maxStrWidth) {
+					renderGraphInfo_splitRoute(routeString, routes, maxStrWidth);
+				}else {
+					routes.add(routeString);
+				}
+			}
+		}
+		
+		//adding other info
+		routes.addFirst("Routes:");
+		routes.addFirst(String.format("Graph - name: %s, description: %s,  number of nodes: %d, of routes: %d", 
+				graph.getName(), graph.getDescription(), graph.getNodeCount(), graph.getRoutes().size()));
+		
+		int height = routes.size() * strHeight() + 9;
+		BufferedImage img = new BufferedImage (graph.getWidth(), height, BufferedImage.TYPE_3BYTE_BGR);
+		Graphics2D g = (Graphics2D)img.getGraphics();
+		
+		g.setColor(Color.WHITE);
+		g.fillRect(0, 0, img.getWidth(), img.getHeight());
+		
+		g.setColor(Color.GRAY);
+		g.drawRect(0, 0, img.getWidth()-1, img.getHeight()-1);
+		
+		g.setColor(Color.BLACK);
+		
+		for(int i=0;i<routes.size();i++) {
+			g.drawString(routes.get(i), padding/2, (1+i) * strHeight());
+		}
+		
+		return img;
+	}
+
+	private static void renderGraphInfo_splitRoute(String routeString, LinkedList<String> routes, int width) {
+		String[] rs = routeString.split(" ");
+		routes.add(rs[0]);
+		for(int i=1;i<rs.length;i++) {
+			if(strWidth(routes.getLast() + rs[i]) <= width) {
+				String last = routes.removeLast();
+				routes.add(last + rs[i]);
+			}else {
+				routes.add(rs[i]);
+			}	
 		}
 	}
 	
-	public static void writeCvrpImageWithCosts(CvrpGraph graph, String path) throws IOException{
+	private static int strWidth(String str) {
+		return g.getFontMetrics().stringWidth(str);
+	}
+	
+	private static int strHeight() {
+		return g.getFontMetrics().getHeight();
+	}
+	
+	public static void writeCvrpImage(CvrpGraph graph, String path) throws IOException{
 		BufferedImage image = renderCvrpGraph(graph);
-		renderCvrpCosts(graph, image);
 		ImageIO.write(image, "png", new File(path + ".png"));
+	
 	}
 	
 	private static void drawNodeInfo(Graphics2D g, CvrpNode node, int radius) {
@@ -143,9 +219,14 @@ public class GraphRenderer {
 		//int strH = metrics.getHeight() + metrics.getAscent();
 		
 		int x = node.getX() - strW/2;
-		int y = node.getY() + radius + 5;
+		int y = node.getY() + radius + NODE_INFO_DELTA_Y;
 		
 		g.setColor(Color.BLACK);
 		g.drawString(node.toString(), x, y);
+	}
+
+	public static void writeRenderedRoutes(CvrpGraph graph, String path) throws IOException{
+		BufferedImage image = renderGraphInfo(graph);
+		ImageIO.write(image, "png", new File(path + ".png"));
 	}
 }

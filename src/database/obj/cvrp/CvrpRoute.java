@@ -74,48 +74,6 @@ public class CvrpRoute {
 		load += e;
 	}
 	
-	/**<B><H1>!!!!! Move this to ClarkeWright !!!!!</H1></B>
-	 * Attempts to merge this route with another route. 
-	 * It fails if the routes have no common nodes(first or last). 
-	 * It fails if the quantity exceeds vehicleCapacity. 
-	 * @param r - the other route
-	 * @param vehicleCapacity
-	 * @return - true if merging was successful, false otherwise
-	 */
-	public boolean mergeRoute(CvrpRoute r, int vehicleCapacity) {
-		if(load + r.load > vehicleCapacity) return false;
-		
-		int tf = getFirst();
-		int tl = getLast();
-		
-		int rf = r.getFirst();
-		int rl = r.getLast();
-		
-		if(tf == rf) {
-			r.getNodes().removeFirst();
-			nodes.addAll(r.getNodes());
-		}else if(tf == rl) {
-			r.getNodes().removeLast();
-			while(!r.getNodes().isEmpty()) {
-				nodes.addFirst(r.getNodes().removeLast());
-			}
-		}else if(tl == rf) {
-			r.getNodes().removeFirst();
-			nodes.addAll(r.getNodes());
-		}else if(tl == rl) {
-			r.getNodes().removeLast();
-			while(!r.getNodes().isEmpty()) {
-				nodes.add(r.getNodes().removeLast());
-			}
-		}else {
-			return false;
-		}
-		
-		this.load += r.load;
-		
-		return true;
-	}
-	
 	public LinkedList<Integer> getNodes(){
 		return nodes;
 	}

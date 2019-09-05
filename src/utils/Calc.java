@@ -13,22 +13,11 @@ public class Calc {
 		return Math.sqrt(t1 + t2);
 	}
 	
-	public static String mlsToHms(long mls) {
-		double seconds = mls / 1000;		
-		double minutes = 0;
-		double hours = 0.0;
+	public static double dist(CvrpNode p1, CvrpNode p2) {
+		double t1 = Math.pow(p1.getX() - p2.getX(), 2);
+		double t2 = Math.pow(p1.getY() - p2.getY(), 2);
 		
-		if(seconds > 60) {
-			minutes = seconds / 60.0;
-			seconds = (minutes - Math.floor(minutes)) * 60;
-		}
-		
-		if(minutes > 60) {
-			hours = minutes / 60.0;
-			minutes = (hours - Math.floor(hours)) * 60.0;
-		}
-		
-		return String.format("%d:%d:%d", (int)hours, (int)minutes, (int)seconds);
+		return Math.sqrt(t1 + t2);
 	}
 	
 	public static int calculateCvrpRouteCost(CvrpRoute r, CvrpGraph graph) {

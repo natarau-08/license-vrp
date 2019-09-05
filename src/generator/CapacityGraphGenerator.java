@@ -127,18 +127,15 @@ public class CapacityGraphGenerator {
 				Point s = nodesPos.get(j);
 				
 				double dist = Calc.dist(r, s);
-				int toAdd = (int)(dist * distMultiplier);
 				
 //				if(toAdd > minCost) {
 //					toAdd = minCost;
 //				}
 				
-				int costValue = 0;
-				if(minCost > 0) {
-					costValue = minCost - toAdd + rand.nextInt(maxCost - minCost + toAdd);
-				}else {
-					costValue = toAdd;
-				}
+				int costValue = (int) (dist * distMultiplier);
+				/*
+				 * TODO complex costs
+				 */
 				
 				insertCost.executeWith(costValue, gId, s.z, r.z);
 				
