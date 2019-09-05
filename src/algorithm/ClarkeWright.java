@@ -102,13 +102,7 @@ public class ClarkeWright {
 			//route is no longer empty
 			for(CvrpRoute ro: routes) {
 				if(routeContains(rid0, rid1, ro)) {
-					
 					inRoutes.add(ro);
-					
-//					if(!addNodeToRoute(rid0, rid1, ro)) {
-//						break;
-//					}
-					
 				}
 			}
 			
@@ -180,7 +174,7 @@ public class ClarkeWright {
 		int dem1 = graph.getNodes().get(n1).getDemand();
 		int dem2 = graph.getNodes().get(n2).getDemand();
 		
-		if((routeFirst == n1 &&  routeLast == n2) || (routeFirst == n2 && routeLast == n1)) {
+		if(rou.contains(n1) && rou.contains(n2)) {
 			return false;
 		}
 		

@@ -21,9 +21,9 @@ public class CvrpReduction {
 		/**
 		 * reduction value is c_di + c_jd - c_ij
 		 */
-		value = GRAPH.getCosts().get(new CvrpArc(depId, arc.getNodeId(0))).getCost() + 
-				GRAPH.getCosts().get(new CvrpArc(depId, arc.getNodeId(1))).getCost() -
-				GRAPH.getCosts().get(new CvrpArc(arc.getNodeId(1), arc.getNodeId(0))).getCost();
+		value = GRAPH.getCosts().get(new CvrpArc(depId, arc.getNodeId(0))).getValue() + 
+				GRAPH.getCosts().get(new CvrpArc(depId, arc.getNodeId(1))).getValue() -
+				GRAPH.getCosts().get(new CvrpArc(arc.getNodeId(1), arc.getNodeId(0))).getValue();
 	}
 	
 	public int getValue() {

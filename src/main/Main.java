@@ -30,7 +30,7 @@ public class Main {
 			
 			SqliteConnection.init();
 			
-			int a = 1;
+			int a = 0;
 			int vehicleCapacity = 200;
 			int nodes = 20;
 			int width = 1200, height = 800;
@@ -43,7 +43,7 @@ public class Main {
 				break;
 			case 0:
 				
-				//SqliteManager.clearDatabase();
+				SqliteManager.clearDatabase();
 				CvrpGraph.createCvrpGraph(graphName, "debug test",  width, height, 32);
 				CvrpGraph graph = CvrpGraph.getGraphByName(graphName);
 				

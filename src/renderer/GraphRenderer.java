@@ -1,5 +1,7 @@
 package renderer;
 
+import static main.Main.LOGGER;
+
 import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
@@ -18,7 +20,8 @@ import database.obj.cvrp.CvrpCost;
 import database.obj.cvrp.CvrpGraph;
 import database.obj.cvrp.CvrpNode;
 import database.obj.cvrp.CvrpRoute;
-import static main.Main.LOGGER;
+import utils.Calc;
+import utils.Point;
 
 public class GraphRenderer {
 
@@ -32,13 +35,15 @@ public class GraphRenderer {
 		g.setColor(Color.WHITE);
 		g.fillRect(0, 0, img.getWidth(), img.getHeight());
 		
-		//drawing arcs
+		//drawing routes
 		LinkedList<CvrpRoute> routes = graph.getRoutes();
 		LOGGER.info("Drawing routes\n" + routes);
 		CvrpNode dep = graph.getDepot();
 		for(CvrpRoute r: routes) {
 			LOGGER.info("Drawing route\n" + r);
 			CvrpNode prev = null;
+			
+			LinkedList<Point> coords = new LinkedList<>();
 			
 			for(Integer i: r.getNodes()) {
 				
@@ -57,11 +62,19 @@ public class GraphRenderer {
 				g.drawLine(n.getX(), n.getY(), prev.getX(), prev.getY());
 				prev = n;
 				
+				coords.add(new Point(n.getX(), n.getY()));
+				
 				if(i == r.getNodes().getLast()) {
 					g.drawLine(n.getX(), n.getY(), dep.getX(), dep.getY());
 				}
 			}
 			
+			//draw route cost
+			Point p = Calc.computeRouteCenterOfMass(r, graph);
+			int cost = Calc.calculateCvrpRouteCost(r, graph);
+			LOGGER.info("Drawing cost at " + p);
+			g.setColor(Color.BLACK);
+			g.drawString(String.format("%d", cost), (int)p.x, (int)p.y);
 		}
 		
 		int radius = graph.getMinDist()/2;
@@ -114,7 +127,7 @@ public class GraphRenderer {
 			int y = (node1.getY() + node2.getY()) / 2;
 			
 			g.setColor(Color.BLACK);
-			g.drawString("" + entry.getValue().getCost(), x, y);
+			g.drawString("" + entry.getValue().getValue(), x, y);
 		}
 	}
 	

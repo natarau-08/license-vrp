@@ -29,7 +29,7 @@ public class CvrpCost {
 		return arc.getNode(pos);
 	}
 	
-	public int getCost() {
+	public int getValue() {
 		return val;
 	}
 	

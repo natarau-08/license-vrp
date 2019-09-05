@@ -164,6 +164,10 @@ public class CvrpGraph {
 		return depot;
 	}
 	
+	public CvrpCost getCost(int id1, int id2) {
+		return costs.get(new CvrpArc(id1, id2));
+	}
+	
 	public int hashCode() {
 		return id;
 	}
