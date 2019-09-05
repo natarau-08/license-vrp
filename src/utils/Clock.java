@@ -13,7 +13,7 @@ public class Clock {
 	}
 	
 	public static String dumpClock() {
-		return String.format("Completed in %s\nmillis: %x", 
+		return String.format("Completed in %s\nmillis: %s", 
 				mlsToHms(System.currentTimeMillis() - t0),
 				System.currentTimeMillis() - t0
 			);

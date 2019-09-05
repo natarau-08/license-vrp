@@ -31,11 +31,12 @@ public class Main {
 			
 			SqliteConnection.init();
 			
-			int a = 3;
+			int a = 0;
 			int vehicleCapacity = 200;
-			int nodes = 20;
+			int nodes = 200;
 			int width = 1200, height = 800;
 			String graphName = "generated0";
+			boolean depotInMiddle = true;
 			
 			//SqliteManager.clearDatabase();
 			switch(a) {
@@ -51,7 +52,7 @@ public class Main {
 				Clock.initClock();
 				LOGGER.info("Generating graph...");
 				
-				CapacityGraphGenerator.generateCvrpGraph(graph, nodes, 0, 0, 10, 50, 0.1f);
+				CapacityGraphGenerator.generateCvrpGraph(graph, nodes, 0, 0, 10, 50, 0.1f, depotInMiddle);
 				
 				LOGGER.info("Generating completed in " + Clock.dumpClock());
 				LOGGER.info("Reloading Graph");

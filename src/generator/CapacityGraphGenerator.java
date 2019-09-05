@@ -41,7 +41,10 @@ public class CapacityGraphGenerator {
 	 * @throws Exception  if anything goes wrong. Bad practice.
 	 * 
 	 */
-	public static void generateCvrpGraph(CvrpGraph graph, int nodeCount, int minCost, int maxCost, int minDemand, int maxDemand,  float distMultiplier) throws Exception{		
+	public static void generateCvrpGraph(CvrpGraph graph, int nodeCount, 
+			int minCost, int maxCost, int minDemand, int maxDemand,  
+			float distMultiplier, boolean depotInMiddle) throws Exception{		
+		
 		int gId = graph.getId();
 		
 		Random rand = new Random();
@@ -50,8 +53,13 @@ public class CapacityGraphGenerator {
 		//we'll need all positions
 		LinkedList<Point> nodesPos = new LinkedList<Point>();
 		
+		Point p;
 		//make the depot
-		Point p = cgg.getRandomPoint();
+		if(depotInMiddle) {
+			p = new Point(graph.getWidth()/2,graph.getHeight()/2);
+		}else {
+			p = cgg.getRandomPoint();
+		}
 		
 		nodesPos.add(p);
 		
