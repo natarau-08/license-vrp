@@ -18,9 +18,10 @@ public class Main {
 
 	public static final String LOG_FILE_PATH = "log.txt";
 	public static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+	public static String[] args;
 	
 	public static void main(String args[]) {
-		
+		Main.args = args;
 		try {
 			
 			//preparing logger
@@ -31,7 +32,7 @@ public class Main {
 			
 			SqliteConnection.init();
 			
-			int a = 0;
+			int a = 4;
 			int vehicleCapacity = 200;
 			int nodes = 200;
 			int width = 1200, height = 800;
@@ -90,6 +91,12 @@ public class Main {
 				GraphRenderer.writeCvrpImage(graph, "greedy");
 				break;
 				default: break;
+				
+			case 4:
+				graph = CvrpGraph.getGraphByName(graphName);
+				
+				
+				break;
 			}
 			
 			LOGGER.info("Finished");
