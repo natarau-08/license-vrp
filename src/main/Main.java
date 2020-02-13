@@ -1,5 +1,7 @@
 package main;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -18,10 +20,11 @@ public class Main {
 
 	public static final String LOG_FILE_PATH = "log.txt";
 	public static final Logger LOGGER = Logger.getLogger(Main.class.getName());
-	public static String[] args;
+	
+	public static Connection connection;
 	
 	public static void main(String args[]) {
-		Main.args = args;
+		connection = DriverManager.getConnection(Configuration.getString("CONNECTION_STRING"));
 		try {
 			
 			//preparing logger
@@ -44,10 +47,10 @@ public class Main {
 			case -1:
 				SqliteManager.clearDatabase();
 				break;
-			case 0:
 				
+			case 0:
 				SqliteManager.clearDatabase();
-				CvrpGraph.createCvrpGraph(graphName, "debug test",  width, height, 32);
+				CvrpGraph.create(graphName, "debug test",  width, height, 32);
 				CvrpGraph graph = CvrpGraph.getGraphByName(graphName);
 				
 				Clock.initClock();
@@ -104,5 +107,7 @@ public class Main {
 		}catch(Exception e) {
 			LOGGER.log(Level.SEVERE, e.getMessage(), e);
 		}
+		
+		connection.close();
 	}
 }

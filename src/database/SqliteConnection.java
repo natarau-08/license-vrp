@@ -8,7 +8,8 @@ import java.sql.ResultSet;
 public class SqliteConnection {
 
 	/***
-	 * Database url
+	 * Database url<br>
+	 * Should be moved to a configuration file
 	 */
 	public static final String URL = "jdbc:sqlite:lib/sqlite3/db.sq3";
 	
@@ -17,12 +18,9 @@ public class SqliteConnection {
 	public static void init() {
 		try {
 			connection = DriverManager.getConnection(URL);
-			
-			checkDatabase();
 		}catch(Exception e) {
 			e.printStackTrace();
 		}
-		
 	}
 	
 	public static PreparedStatement prepare(String query) {
@@ -80,9 +78,4 @@ public class SqliteConnection {
 		}
 		return null;
 	}
-	
-	public static void checkDatabase() throws Exception{
-		//TODO
-	}
-	
 }

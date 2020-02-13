@@ -1,25 +1,37 @@
 
 -- capacitated vehicle routing problem schema
-CREATE TABLE cvrp_graphs (
+CREATE TABLE cvrp_graph (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	name VARCHAR (100),
-	description VARCHAR (500),
+	name TEXT,
+	description TEXT,
 	width INTEGER,
 	height INTEGER,
-	mdist INTEGER
+	node_padding INTEGER,
+	
+	UNIQUE(name)
 );
 
-CREATE TABLE cvrp_nodes (
+CREATE TABLE cvrp_node (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	posx INTEGER, 
-	posy INTEGER, 
+	x INTEGER, 
+	y INTEGER, 
 	demand INTEGER,
 	graph INTEGER,
 	
-	FOREIGN KEY(graph) REFERENCES cvrp_graphs(id)
+	FOREIGN KEY(graph) REFERENCES cvrp_graph (id)
 );
 
-CREATE TABLE cvrp_costs(
+-- sqlite does not support adding FKs after table creation
+CREATE TABLE cvrp_graph_depot (
+	id INTEGER PRIMARY KEY AUTOINCREMENT,
+	graph INTEGER,
+	node INTEGER,
+	
+	FOREIGN KEY(graph) REFERENCES cvrp_graph(id),
+	FOREIGN KEY(node) REFERENCES cvrp_node(id)
+);
+
+CREATE TABLE cvrp_cost (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	graph INTEGER,
 	val INTEGER,
