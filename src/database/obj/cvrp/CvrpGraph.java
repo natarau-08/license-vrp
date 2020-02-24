@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.logging.Level;
 
+import main.Configuration;
+
 import static main.Main.LOGGER;
 
 /**
@@ -25,7 +27,7 @@ public class CvrpGraph {
 	public HashMap<CvrpArc, CvrpCost> costs;
 	public LinkedList<CvrpRoute> routes;
 	public CvrpNode depot;
-	 
+	
 	private String description, name;
 	private int id, width, height, nodePadding;
 	
@@ -48,6 +50,8 @@ public class CvrpGraph {
 	
 	public void save(Connection connection) {
 		try {
+			connection.setAutoCommit(false);
+			
 			//check if graph exists
 			PreparedStatement exists = connection.prepareStatement("SELECT COUNT(*) AS c FROM cvrp_graph WHERE id=?;");
 			exists.setInt(1, id);
@@ -69,6 +73,74 @@ public class CvrpGraph {
 			ps.setInt(5, nodePadding);
 			
 			ps.execute();
+			ps.close();
+			
+			//clearing database
+			ps = connection.prepareStatement("DELETE FROM cvrp_graph_depot WHERE graph=?;DELETE FROM cvrp_node WHERE graph=?;DELETE FROM cvrp_cost WHERE graph=?;");
+			ps.setInt(1, id);
+			ps.setInt(2, id);
+			ps.setInt(3, id);
+			ps.execute();
+			ps.close();
+			
+			//inserting nodes
+			final int batchCount = Configuration.getInt(Configuration.SQL_BATCH_COUNT);
+			
+			ps = connection.prepareStatement("INSERT INTO cvrp_node(x, y, demand, graph) VALUES(?,?,?,?);");
+			int j = 1;
+			for(CvrpNode n: nodes.values()) {
+				j++;
+				
+				ps.setInt(1, n.getX());
+				ps.setInt(2, n.getY());
+				ps.setInt(3, n.getDemand());
+				ps.setInt(4, id);
+				
+				ps.addBatch();
+				
+				if(j == batchCount) {
+					ps.executeBatch();
+					j = 1;
+				}
+			}
+			
+			if(j != 1) {
+				ps.executeBatch();
+			}
+			ps.close();
+			
+			//inserting depot association
+			ps = connection.prepareStatement("INSERT INTO cvrp_graph_depot(graph, node) VALUES(?,?);");
+			ps.setInt(1,id);
+			ps.setInt(2, depot.getId());
+			ps.execute();
+			ps.close();
+			
+			//inserting costs
+			j = 1;
+			ps = connection.prepareStatement("INSERT INTO cvrp_cost(graph, val, node1, node2) VALUES(?,?,?,?);");
+			for(CvrpCost c: costs.values()) {
+				j++;
+				
+				ps.setInt(1, id);
+				ps.setInt(2, c.getValue());
+				ps.setInt(3, c.getArc().getNode1().getId());
+				ps.setInt(4, c.getArc().getNode2().getId());
+				ps.addBatch();
+				
+				if(j == batchCount) {
+					ps.executeBatch();
+					j = 1;
+				}
+			}
+			
+			if(j != 1) {
+				ps.executeBatch();
+			}
+			ps.close();
+			
+			connection.commit();
+			connection.setAutoCommit(true);
 		}catch(SQLException e) {
 			LOGGER.log(Level.SEVERE, e.getMessage(), e);
 		}

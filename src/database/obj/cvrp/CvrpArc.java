@@ -1,36 +1,19 @@
 package database.obj.cvrp;
 
-import static database.obj.cvrp.CvrpGraph.GRAPH;
-
 public class CvrpArc {
 	
-	private int id1, id2;
+	private CvrpNode node1, node2;
 	
-	public CvrpArc(int id1, int id2) {
-		this.id1 = id1;
-		this.id2 = id2;
+	public CvrpArc(CvrpNode node1, CvrpNode node2) {
+		this.node1 = node1;
+		this.node2 = node2;
 	}
-	
-	public CvrpArc(CvrpNode n1, CvrpNode n2) {
-		this.id1 = n1.getId();
-		this.id2 = n2.getId();
-	}
-	
+		
 	public CvrpArc(CvrpReduction red) {
-		this.id1 = red.getNode(0).getId();
-		this.id2 = red.getNode(1).getId();
+		this.node1 = red.getNode(0);
+		this.node2 = red.getNode(1);
 	}
 	
-	public CvrpNode getNode(int index) {
-		if(index == 0) return GRAPH.getNodes().get(id1);
-		return GRAPH.getNodes().get(id2);
-	}
-	
-	public int getNodeId(int index) {
-		if(index == 0) return id1;
-		return id2;
-	}
-
 	/**
 	 * Hash code for this object is computed with formula <em>(l + g)*(l + g + 1)/2 + g</em>
 	 * where l is the lower node index and g is the greater node index.
@@ -42,12 +25,12 @@ public class CvrpArc {
 	public int hashCode() {
 		//always lesser + greater!
 		int l, g;
-		if(id1 > id2) {
-			l = id2;
-			g = id1;
+		if(node1.getId() > node2.getId()) {
+			l = node2.getId();
+			g = node1.getId();
 		}else {
-			l = id1;
-			g = id2;
+			l = node1.getId();
+			g = node2.getId();
 		}
 		
 		return (l + g)*(l + g + 1)/2 + g;
@@ -62,18 +45,22 @@ public class CvrpArc {
 	public boolean equals(Object obj) {
 		if(! (obj instanceof CvrpArc) ) {
 			return false;
-		}else {
-			CvrpArc a = (CvrpArc) obj;
-			if((a.id1 == id1 && a.id2 == id2) || (a.id2 == id1 && a.id1 == id2)) {
-				return true;
-			}
 		}
 		
-		return false;
+		CvrpArc a = (CvrpArc) obj;
+		return a.hashCode() == this.hashCode();
 	}
 	
 	@Override
 	public String toString() {
-		return String.format("(%d, %d)", id1, id2);
+		return String.format("(%d, %d)", node1.getId(), node2.getId());
+	}
+	
+	public CvrpNode getNode1() {
+		return node1;
+	}
+	
+	public CvrpNode getNode2() {
+		return node2;
 	}
 }

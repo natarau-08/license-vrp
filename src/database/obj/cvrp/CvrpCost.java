@@ -25,10 +25,6 @@ public class CvrpCost {
 		return arc;
 	}
 	
-	public CvrpNode getNode(int pos) {
-		return arc.getNode(pos);
-	}
-	
 	public int getValue() {
 		return val;
 	}
@@ -48,7 +44,7 @@ public class CvrpCost {
 	
 	@Override
 	public String toString() {
-		return String.format("%d(%d, %d)", val, arc.getNodeId(0), arc.getNodeId(1));
+		return String.format("%d(%d, %d)", val, arc.getNode1().getId(), arc.getNode2().getId());
 	}
 	
 }
