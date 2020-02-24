@@ -2,9 +2,13 @@ package database.obj.cvrp;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.logging.Level;
+
+import static main.Main.LOGGER;
 
 /**
  * Represents a graph in which the following constraints are applied:
@@ -44,11 +48,29 @@ public class CvrpGraph {
 	
 	public void save(Connection connection) {
 		try {
-			PreparedStatement ps = connection.prepareStatement("INSERT INTO cvrp_graph(name, description, width, height, node_padding) VALUES(?,?,?,?,?);");
-			//TODO save Cvrp Graph to db
-		}catch(SQLException e) {
+			//check if graph exists
+			PreparedStatement exists = connection.prepareStatement("SELECT COUNT(*) AS c FROM cvrp_graph WHERE id=?;");
+			exists.setInt(1, id);
+			ResultSet res = exists.executeQuery();
+			int rowsFound = res.getInt("c");
 			
+			PreparedStatement ps;
+			if(rowsFound == 1) {
+				ps = connection.prepareStatement("UPDATE cvrp_graph SET name=?, description=?, width=?, height=?, node_padding=? WHERE id=?;");
+				ps.setInt(6, id);
+			}else {
+				ps = connection.prepareStatement("INSERT INTO cvrp_graph(name, description, width, height, node_padding) VALUES(?,?,?,?,?);");
+			}
+			
+			ps.setString(1, name);
+			ps.setString(2, description);
+			ps.setInt(3, width);
+			ps.setInt(4, height);
+			ps.setInt(5, nodePadding);
+			
+			ps.execute();
+		}catch(SQLException e) {
+			LOGGER.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
-	
 }

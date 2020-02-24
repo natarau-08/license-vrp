@@ -45,7 +45,7 @@ public class CapacityGraphGenerator {
 			int minCost, int maxCost, int minDemand, int maxDemand,  
 			float distMultiplier, boolean depotInMiddle) throws Exception{		
 		
-		int gId = graph.getId();
+		int gId = graph.hashCode();
 		
 		Random rand = new Random();
 		CapacityGraphGenerator cgg = new CapacityGraphGenerator(rand, graph.getWidth(), graph.getHeight());
