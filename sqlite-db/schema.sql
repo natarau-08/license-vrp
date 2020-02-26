@@ -6,7 +6,6 @@ CREATE TABLE cvrp_graph (
 	description TEXT,
 	width INTEGER,
 	height INTEGER,
-	node_padding INTEGER,
 	
 	UNIQUE(name)
 );
@@ -42,7 +41,7 @@ CREATE TABLE cvrp_cost (
 	FOREIGN KEY(node2) REFERENCES cvrp_nodes(id)
 );
 
-SELECT * FROM cvrp_graphs;
+-- SELECT * FROM cvrp_graphs;
 
 --DROP TABLE cvrp_graphs;
 --DROP TABLE cvrp_costs;

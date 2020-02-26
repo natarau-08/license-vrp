@@ -1,24 +1,15 @@
 package database.obj.cvrp;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import database.SqliteConnection;
-
 public class CvrpCost {
 
 	private int id;
-	private int val;
+	private int value;
 	private CvrpArc arc;
 	
-	public CvrpCost(int id) throws SQLException{
-		ResultSet drs = SqliteConnection.query("SELECT * FROM cvrp_costs WHERE id = ?;", id);
-		
-		this.val = drs.getInt("val");
-		int n1 = drs.getInt("node1");
-		int n2 = drs.getInt("node2");
-		arc = new CvrpArc(n1, n2);
+	public CvrpCost(int id, int value, CvrpArc arc) {
 		this.id = id;
+		this.value = value;
+		this.arc = arc;
 	}
 	
 	public CvrpArc getArc() {
@@ -26,7 +17,11 @@ public class CvrpCost {
 	}
 	
 	public int getValue() {
-		return val;
+		return value;
+	}
+	
+	public int getId() {
+		return id;
 	}
 	
 	@Override
@@ -44,7 +39,7 @@ public class CvrpCost {
 	
 	@Override
 	public String toString() {
-		return String.format("%d(%d, %d)", val, arc.getNode1().getId(), arc.getNode2().getId());
+		return String.format("%d(%d, %d)", value, arc.getNode1().getId(), arc.getNode2().getId());
 	}
 	
 }

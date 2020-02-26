@@ -1,6 +1,6 @@
 package algorithm;
 
-import static main.Main.LOGGER;
+import static main.Main.LOG;
 
 import java.util.LinkedList;
 
@@ -28,13 +28,13 @@ public class ClarkeWright {
 		ClarkeWright.graph = graph;
 		maxLoad = vehicleCapacity;
 		
-		LOGGER.info("Fetching demands and nodes");
+		LOG.info("Fetching demands and nodes");
 		LinkedList<CvrpReduction> reductions = new LinkedList<>();
 		LinkedList<CvrpRoute> routes = new LinkedList<>();
 		
 		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
 		
-		LOGGER.info("Computing reductions");
+		LOG.info("Computing reductions");
 		Clock.initClock();
 		
 		for(int i=0;i<nodes.size()-1;i++) {
@@ -54,11 +54,11 @@ public class ClarkeWright {
 			}
 		}
 		
-		LOGGER.info("Reductions computed: \n" + reductions);
+		LOG.info("Reductions computed: \n" + reductions);
 		
 		reductions.sort((a, b) -> b.getValue() - a.getValue());
 		
-		LOGGER.info("Sorting reductions: \n" + reductions);
+		LOG.info("Sorting reductions: \n" + reductions);
 			
 		if(algorithm == CLARKE_WRIGHT_PARALLEL) {
 			compCWoopPar(nodes, reductions, routes);
@@ -67,7 +67,7 @@ public class ClarkeWright {
 			compCWoopSeq(nodes, reductions, routes);
 		}
 		
-		LOGGER.info("Algorithm completed with solution:\n" + routes + "\nin " + Clock.dumpClock());
+		LOG.info("Algorithm completed with solution:\n" + routes + "\nin " + Clock.dumpClock());
 		
 		//adding routes to graph
 		graph.getRoutes().addAll(routes);
@@ -136,7 +136,7 @@ public class ClarkeWright {
 					break;
 				
 				default:
-					LOGGER.info("More than two routes? Impossible!");
+					LOG.info("More than two routes? Impossible!");
 					break;
 				}
 				
@@ -207,13 +207,13 @@ public class ClarkeWright {
 					break;
 				
 				case 2:
-					LOGGER.info("Attempting to merge " + inRoutes.getFirst() + " with " + inRoutes.getLast() + "\nReduction:" + r);
+					LOG.info("Attempting to merge " + inRoutes.getFirst() + " with " + inRoutes.getLast() + "\nReduction:" + r);
 					if(mergeRoutes(inRoutes.getFirst(), inRoutes.getLast()))
-						LOGGER.info("-----------------------------------------------------------------Merged two routes");
+						LOG.info("-----------------------------------------------------------------Merged two routes");
 					break;
 				
 				default:
-					LOGGER.severe("Reduction " + r + " is found in routes " + inRoutes);
+					LOG.severe("Reduction " + r + " is found in routes " + inRoutes);
 					break;
 			}
 			
@@ -303,7 +303,7 @@ public class ClarkeWright {
 	 */
 	public static boolean mergeRoutes(CvrpRoute r1, CvrpRoute r2) {
 		if(r1.getLoad() + r2.getLoad() > maxLoad) {
-			LOGGER.info("Merge failed: " + r1.getLoad() + " + " + r2.getLoad() + " = " + (r1.getLoad() + r2.getLoad()) + " > " + maxLoad);
+			LOG.info("Merge failed: " + r1.getLoad() + " + " + r2.getLoad() + " = " + (r1.getLoad() + r2.getLoad()) + " > " + maxLoad);
 			return false;
 		}
 		
@@ -330,7 +330,7 @@ public class ClarkeWright {
 				r1.getNodes().add(r2.getNodes().removeLast());
 			}
 		}else {
-			LOGGER.info("Merge failed: reduction connects one or two nodes that are inside the route");
+			LOG.info("Merge failed: reduction connects one or two nodes that are inside the route");
 			return false;
 		}
 		

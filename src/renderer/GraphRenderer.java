@@ -1,6 +1,6 @@
 package renderer;
 
-import static main.Main.LOGGER;
+import static main.Main.LOG;
 
 import java.awt.Color;
 import java.awt.FontMetrics;
@@ -55,10 +55,10 @@ public class GraphRenderer {
 		
 		//drawing routes
 		LinkedList<CvrpRoute> routes = graph.getRoutes();
-		LOGGER.info("Drawing routes\n" + routes);
+		LOG.info("Drawing routes\n" + routes);
 		CvrpNode dep = graph.getDepot();
 		for(CvrpRoute r: routes) {
-			LOGGER.info("Drawing route\n" + r);
+			LOG.info("Drawing route\n" + r);
 			CvrpNode prev = null;
 			
 			LinkedList<Point> coords = new LinkedList<>();
@@ -68,7 +68,7 @@ public class GraphRenderer {
 				CvrpNode n = graph.getNodes().get(i);
 				
 				if(i == r.getFirst()) {
-					LOGGER.info("Route's first node is " + n);
+					LOG.info("Route's first node is " + n);
 					g.setColor(Color.black);
 					g.drawLine(n.getX(), n.getY(), dep.getX(), dep.getY());
 					
@@ -90,7 +90,7 @@ public class GraphRenderer {
 			//draw route cost
 			Point p = Calc.computeRouteCenterOfMass(r, graph);
 			int cost = Calc.calculateCvrpRouteCost(r, graph);
-			LOGGER.info("Drawing cost at " + p);
+			LOG.info("Drawing cost at " + p);
 			g.setColor(Color.BLACK);
 			g.drawString(String.format("%d", cost), (int)p.x, (int)p.y);
 		}

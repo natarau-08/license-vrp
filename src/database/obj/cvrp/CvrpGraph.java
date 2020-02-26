@@ -1,16 +1,19 @@
 package database.obj.cvrp;
 
-import java.sql.Connection;
+import static main.Main.LOG;
+import static main.Main.connection;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Random;
 import java.util.logging.Level;
 
-import main.Configuration;
-
-import static main.Main.LOGGER;
+import main.Cfg;
+import utils.Calc;
+import utils.Point;
 
 /**
  * Represents a graph in which the following constraints are applied:
@@ -29,26 +32,82 @@ public class CvrpGraph {
 	public CvrpNode depot;
 	
 	private String description, name;
-	private int id, width, height, nodePadding;
-	
-	private CvrpGraph(String name, String description, int width, int height, int nodePadding) {
+	private int id, width, height;
+		
+	public CvrpGraph(String name) {
 		nodes = new HashMap<>();
 		costs = new HashMap<>();
 		routes = new LinkedList<>();
-		depot = null;
 		
 		this.name = name;
-		this.description = description;
-		this.width = width;
-		this.height = height;
-		this.nodePadding = nodePadding;
+		
+		//fetching from database
+		try {
+			//getting graph data
+			PreparedStatement ps = connection.prepareStatement("SELECT id, description, width, height FROM cvrp_graph WHERE name=?;");
+			ResultSet res = ps.executeQuery();
+			if(res.next()) {
+				this.id = res.getInt("id");
+				this.description = res.getString("description");
+				this.width = res.getInt("width");
+				this.height = res.getInt("height");
+			}
+			res.close();
+			ps.close();
+		
+			//getting depot id
+			int depot = -1;
+			ps = connection.prepareStatement("SELECT node FROM cvrp_graph_depot WHERE graph=?;");
+			ps.setInt(1, id);
+			res = ps.executeQuery();
+			if(res.next()) {
+				depot = res.getInt("node");
+			}
+			res.close();
+			ps.close();
+			
+			//loading nodes
+			ps = connection.prepareStatement("SELECT id, x, y, demand FROM cvrp_node WHERE graph=?;");
+			ps.setInt(1, id);
+			res = ps.executeQuery();
+			
+			while(res.next()) {
+				CvrpNode n = new CvrpNode(res.getInt("id"), res.getInt("demand"), res.getInt("x"), res.getInt("y"));
+				nodes.put(n.getId(), n);
+				
+				if(n.getId() == depot) {
+					this.depot = n;
+				}
+			}
+			res.close();
+			ps.close();
+			
+			//getting costs
+			ps = connection.prepareStatement("SELECT id, val, node1, node2 FROM cvrp_cost WHERE graph=?;");
+			ps.setInt(1, id);
+			res = ps.executeQuery();
+			
+			while(res.next()) {
+				int n1 = res.getInt("node1");
+				int n2 = res.getInt("node2");
+				CvrpArc arc = new CvrpArc(nodes.get(n1), nodes.get(n2));
+				CvrpCost cost = new CvrpCost(res.getInt("id"), res.getInt("value"), arc);
+				costs.put(arc, cost);
+			}
+			
+			res.close();
+			ps.close();
+			
+		}catch(SQLException sqlex) {
+			LOG.log(Level.SEVERE, sqlex.getMessage(), sqlex);
+		}
 	}
 	
 	public int hashCode() {
 		return id;
 	}
 	
-	public void save(Connection connection) {
+	public void save() {
 		try {
 			connection.setAutoCommit(false);
 			
@@ -63,14 +122,13 @@ public class CvrpGraph {
 				ps = connection.prepareStatement("UPDATE cvrp_graph SET name=?, description=?, width=?, height=?, node_padding=? WHERE id=?;");
 				ps.setInt(6, id);
 			}else {
-				ps = connection.prepareStatement("INSERT INTO cvrp_graph(name, description, width, height, node_padding) VALUES(?,?,?,?,?);");
+				ps = connection.prepareStatement("INSERT INTO cvrp_graph(name, description, width, height) VALUES(?,?,?,?);");
 			}
 			
 			ps.setString(1, name);
 			ps.setString(2, description);
 			ps.setInt(3, width);
 			ps.setInt(4, height);
-			ps.setInt(5, nodePadding);
 			
 			ps.execute();
 			ps.close();
@@ -84,7 +142,7 @@ public class CvrpGraph {
 			ps.close();
 			
 			//inserting nodes
-			final int batchCount = Configuration.getInt(Configuration.SQL_BATCH_COUNT);
+			final int batchCount = Cfg.getInt(Cfg.SQL_BATCH_COUNT);
 			
 			ps = connection.prepareStatement("INSERT INTO cvrp_node(x, y, demand, graph) VALUES(?,?,?,?);");
 			int j = 1;
@@ -140,9 +198,74 @@ public class CvrpGraph {
 			ps.close();
 			
 			connection.commit();
-			connection.setAutoCommit(true);
 		}catch(SQLException e) {
-			LOGGER.log(Level.SEVERE, e.getMessage(), e);
+			LOG.log(Level.SEVERE, e.getMessage(), e);
+		}finally {
+			try {
+				connection.setAutoCommit(true);
+			}catch(SQLException sqlex) {
+				LOG.log(Level.SEVERE, sqlex.getMessage(), sqlex);
+			}
 		}
+	}
+	
+	public static CvrpGraph generateRandom(int nodeCount, String graphName, String graphDescription, int width, int height) {
+		LOG.info("Generating Random CVRP Graph\nFetching configurations...");
+		int nodeMargin = Cfg.getInt(Cfg.NODE_MARGIN);
+		int nodeDiameter = Cfg.getInt(Cfg.NODE_DIAMETER);
+		int maxTries = Cfg.getInt(Cfg.MAX_NODE_DRAW_TRIES);
+		LOG.info(String.format("Node Options:\nNode Margin: %d, Node Diameter: %d, Max Tries: %d", nodeMargin, nodeDiameter, maxTries));
+		
+		//the minimum distance between nodes and area boundaries
+		int outerRadius = nodeDiameter / 2 + nodeMargin;
+		
+		Random random = new Random();
+		
+		LinkedList<Point> nodeCoords = new LinkedList<>();
+		
+		for(int i=0;i<nodeCount;i++) {
+			boolean validNode = true;
+			int tries = 0;
+			do {
+				int x = random.nextInt(width);
+				
+				if(x - outerRadius <= 0) {
+					x += (x - outerRadius) * -1;
+				}
+				
+				if(x + outerRadius >= width) {
+					x -= outerRadius + (x + outerRadius - width);
+				}
+				
+				int y = random.nextInt(height);
+				
+				if(y - outerRadius <= 0) {
+					y += (y - outerRadius) * -1;
+				}
+				
+				if(y + outerRadius >= height) {
+					y -= outerRadius + (y + outerRadius - height);
+				}
+				
+				Point pc = new Point(x, y);
+				
+				tries++;
+				
+				for(Point p: nodeCoords) {
+					if(Calc.dist(p, pc) < outerRadius * 2) {
+						validNode = false;
+						break;
+					}
+				}
+				
+				if(tries > maxTries) {
+					LOG.info(String.format("Cannot generate CvrpGraph. Tried %d times to generate node and no space could be found.", tries));
+					throw new RuntimeException("\n\nFATAL ERROR:\nREACHED MAX TRIES FOR GENERATING A NODE FOR CVRP GRAPH");
+				}
+				
+			}while(!validNode);
+		}
+		
+		return null;
 	}
 }

@@ -10,25 +10,25 @@ import java.util.logging.SimpleFormatter;
 public class Main {
 
 	public static final String LOG_FILE_PATH = "log.txt";
-	public static final Logger LOGGER = Logger.getLogger(Main.class.getName());
+	public static final Logger LOG = Logger.getLogger(Main.class.getName());
 	
 	public static Connection connection;
 	
 	public static void main(String args[]) {
 		
 		try {
-			connection = DriverManager.getConnection(Configuration.getString("CONNECTION_STRING"));
+			connection = DriverManager.getConnection(Cfg.getString("CONNECTION_STRING"));
 			//preparing logger
 			FileHandler fh = new FileHandler(LOG_FILE_PATH);
 			SimpleFormatter formatter = new SimpleFormatter();
 			fh.setFormatter(formatter);
-			LOGGER.addHandler(fh);
+			LOG.addHandler(fh);
 			
 			connection.close();
-			LOGGER.info("Finished");
+			LOG.info("Finished");
 			
 		}catch(Exception e) {
-			LOGGER.log(Level.SEVERE, e.getMessage(), e);
+			LOG.log(Level.SEVERE, e.getMessage(), e);
 		}
 	}
 }

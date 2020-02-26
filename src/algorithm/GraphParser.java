@@ -1,6 +1,6 @@
 package algorithm;
 
-import static main.Main.LOGGER;
+import static main.Main.LOG;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -65,8 +65,8 @@ public class GraphParser {
 			costLog += "\n";
 		}
 		
-		LOGGER.info("Demand vector:\n" + demandLog);
-		LOGGER.info("Cost matrix:\n" + costLog);
+		LOG.info("Demand vector:\n" + demandLog);
+		LOG.info("Cost matrix:\n" + costLog);
 		return new int[][][] {nodes, costs};
 	}
 }

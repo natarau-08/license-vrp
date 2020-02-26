@@ -1,24 +1,17 @@
 package database.obj.cvrp;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import database.SqliteConnection;
-
 public class CvrpNode {
 
 	private int id;
 	private int demand;
-	private int posX;
-	private int posY;
+	private int x;
+	private int y;
 	
-	public CvrpNode(int id) throws SQLException{
-		ResultSet data = SqliteConnection.query("SELECT * FROM cvrp_nodes WHERE id = ?;", id);
-		
-		this.id = data.getInt("id");
-		this.demand = data.getInt("demand");
-		this.posX = data.getInt("posx");
-		this.posY = data.getInt("posy");
+	public CvrpNode(int id, int demand, int x, int y) {
+		this.id = id;
+		this.demand = demand;
+		this.x = x;
+		this.y = y;
 	}
 	
 	public int getId() {
@@ -30,11 +23,11 @@ public class CvrpNode {
 	}
 	
 	public int getX() {
-		return this.posX;
+		return this.x;
 	}
 	
 	public int getY() {
-		return this.posY;
+		return this.y;
 	}
 	
 	@Override

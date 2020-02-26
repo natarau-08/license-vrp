@@ -2,15 +2,16 @@ package main;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.util.HashMap;
 
-public class Configuration {
-	private static HashMap<String, String> cfg = getConfigurations();
-	
+public class Cfg {
+
 	public static final String CONNECTION_STRING = "CONNECTION_STRING";
 	public static final String SQL_BATCH_COUNT = "SQL_BATCH_COUNT";
+	public static final String NODE_MARGIN = "NODE_MARGIN";
+	public static final String NODE_DIAMETER = "NODE_DIAMETER";
+	public static final String MAX_NODE_DRAW_TRIES = "MAX_NODE_DRAW_TRIES";
 	
-	private static HashMap<String, String> getConfigurations() {
+	private static String getConfigurationString(String passedKey) {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader("configuration.cfg"));
 			
@@ -22,7 +23,11 @@ public class Configuration {
 				int del = line.indexOf("=");
 				String key = line.substring(0, del);
 				String val = line.substring(del + 1);
-				cfg.put(key, val);
+				
+				if(key.contentEquals(passedKey)) {
+					br.close();
+					return val;
+				}
 			}
 			
 			br.close();
@@ -33,10 +38,10 @@ public class Configuration {
 	}
 	
 	public static String getString(String key) {
-		return cfg.get(key);
+		return getConfigurationString(key);
 	}
 	
 	public static int getInt(String key) {
-		return Integer.parseInt(cfg.get(key));
+		return Integer.parseInt(getConfigurationString(key));
 	}
 }

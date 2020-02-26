@@ -8,7 +8,7 @@ import database.obj.cvrp.CvrpRoute;
 import utils.Calc;
 import utils.Clock;
 
-import static main.Main.LOGGER;
+import static main.Main.LOG;
 
 public class Greedy {
 
@@ -17,7 +17,7 @@ public class Greedy {
 		
 		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
 		
-		LOGGER.info("Computing Greedy Solution...");
+		LOG.info("Computing Greedy Solution...");
 		Clock.initClock();
 		
 		nodes.sort((a, b) -> 
@@ -43,6 +43,6 @@ public class Greedy {
 			}
 		}
 		
-		LOGGER.info("Computed Greedy solution" + routes + "\nin " + Clock.dumpClock());
+		LOG.info("Computed Greedy solution" + routes + "\nin " + Clock.dumpClock());
 	}
 }
