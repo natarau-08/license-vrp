@@ -7,6 +7,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import obj.cvrp.CvrpGraph;
+
 public class Main {
 
 	public static final String LOG_FILE_PATH = "log.txt";
@@ -23,6 +25,9 @@ public class Main {
 			SimpleFormatter formatter = new SimpleFormatter();
 			fh.setFormatter(formatter);
 			LOG.addHandler(fh);
+			
+			CvrpGraph graph = CvrpGraph.generateRandom(10, "refactoring-test", "none", 500, 500, true);
+			graph.save();
 			
 			connection.close();
 			LOG.info("Finished");

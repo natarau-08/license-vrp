@@ -1,4 +1,4 @@
-package database.obj.cvrp;
+package obj.cvrp;
 
 public class CvrpNode {
 

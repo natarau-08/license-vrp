@@ -10,13 +10,15 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 import javax.imageio.ImageIO;
 
-import database.obj.cvrp.CvrpGraph;
-import database.obj.cvrp.CvrpNode;
-import database.obj.cvrp.CvrpRoute;
+import main.Cfg;
+import obj.cvrp.CvrpGraph;
+import obj.cvrp.CvrpNode;
+import obj.cvrp.CvrpRoute;
 import utils.Calc;
 import utils.Point;
 
@@ -95,27 +97,27 @@ public class GraphRenderer {
 			g.drawString(String.format("%d", cost), (int)p.x, (int)p.y);
 		}
 		
-		int radius = graph.getMinDist()/2;
-		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
+		int diameter = Cfg.getInt(Cfg.NODE_DIAMETER);
+		HashMap<Integer, CvrpNode> nodes = graph.getNodes();
 		
-		for(CvrpNode n : nodes) {
+		for(CvrpNode n : nodes.values()) {
 			int x = n.getX();
 			int y = n.getY();
 			
 			if(n.getDemand() == 0) {
 				g.setColor(Color.green);
-				g.fillRect(x-radius/2, y-radius/2, radius, radius);
+				g.fillRect(x-diameter/2, y-diameter/2, diameter, diameter);
 				g.setColor(Color.BLACK);
-				g.drawRect(x-radius/2, y-radius/2, radius, radius);
+				g.drawRect(x-diameter/2, y-diameter/2, diameter, diameter);
 			}else {
 				g.setColor(Color.red);
-				g.fillOval(x-radius/2, y-radius/2, radius, radius);
+				g.fillOval(x-diameter/2, y-diameter/2, diameter, diameter);
 				g.setColor(Color.BLACK);
-				g.drawOval(x-radius/2, y-radius/2, radius, radius);
+				g.drawOval(x-diameter/2, y-diameter/2, diameter, diameter);
 				
 				
 			}
-			drawNodeInfo(g, n, radius);
+			drawNodeInfo(g, n, diameter);
 		}
 		
 		//drawing routes string
@@ -165,7 +167,7 @@ public class GraphRenderer {
 		//adding other info
 		routes.addFirst("Routes:");
 		routes.addFirst(String.format("Graph - name: %s, description: %s,  number of nodes: %d, of routes: %d", 
-				graph.getName(), graph.getDescription(), graph.getNodeCount(), graph.getRoutes().size()));
+				graph.getName(), graph.getDescription(), graph.getNodes().size(), graph.getRoutes().size()));
 		
 		int height = routes.size() * strHeight() + 9;
 		BufferedImage img = new BufferedImage (graph.getWidth(), height, BufferedImage.TYPE_3BYTE_BGR);

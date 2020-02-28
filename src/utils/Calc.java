@@ -1,8 +1,8 @@
 package utils;
 
-import database.obj.cvrp.CvrpGraph;
-import database.obj.cvrp.CvrpNode;
-import database.obj.cvrp.CvrpRoute;
+import obj.cvrp.CvrpGraph;
+import obj.cvrp.CvrpNode;
+import obj.cvrp.CvrpRoute;
 
 public class Calc {
 
@@ -27,16 +27,16 @@ public class Calc {
 			
 			if(first == -1) {
 				int dep = graph.getDepot().getId();
-				cost += graph.getCost(dep, i).getValue();
+				cost += graph.getCostValue(dep, i);
 				first = i;
 				continue;
 			}
 			
-			cost += graph.getCost(i, first).getValue();
+			cost += graph.getCostValue(i, first);
 			first = i;
 		}
 		
-		cost += graph.getCost(r.getNodes().getLast(), graph.getDepot().getId()).getValue();
+		cost += graph.getCostValue(r.getNodes().getLast(), graph.getDepot().getId());
 		
 		return cost;
 	}

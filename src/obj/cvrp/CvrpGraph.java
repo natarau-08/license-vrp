@@ -1,4 +1,4 @@
-package database.obj.cvrp;
+package obj.cvrp;
 
 import static main.Main.LOG;
 import static main.Main.connection;
@@ -26,11 +26,10 @@ import utils.Point;
  */
 public class CvrpGraph {
 	
-	public HashMap<Integer, CvrpNode> nodes;
-	public HashMap<CvrpArc, CvrpCost> costs;
-	public LinkedList<CvrpRoute> routes;
-	public CvrpNode depot;
-	
+	private HashMap<Integer, CvrpNode> nodes;
+	private HashMap<CvrpArc, CvrpCost> costs;
+	private LinkedList<CvrpRoute> routes;
+	private CvrpNode depot;
 	private String description, name;
 	private int id, width, height;
 		
@@ -103,8 +102,35 @@ public class CvrpGraph {
 		}
 	}
 	
+	protected CvrpGraph() {}
+	
 	public int hashCode() {
 		return id;
+	}
+	
+	public HashMap<Integer, CvrpNode> getNodes(){
+		return nodes;
+	}
+	
+	public HashMap<CvrpArc, CvrpCost> getCosts(){
+		return costs;
+	}
+	
+	public LinkedList<CvrpRoute> getRoutes(){
+		return routes;
+	}
+	
+	public CvrpNode getDepot() {
+		return depot;
+	}
+	
+	public int getWidth() {return width;}
+	public int getHeight() {return height;}
+	public String getName() {return name;}
+	public String getDescription() {return description;}
+	
+	public int getCostValue(int i, int j) {
+		return costs.get(new CvrpArc(nodes.get(i), nodes.get(j))).getValue();
 	}
 	
 	public void save() {
@@ -209,7 +235,7 @@ public class CvrpGraph {
 		}
 	}
 	
-	public static CvrpGraph generateRandom(int nodeCount, String graphName, String graphDescription, int width, int height) {
+	public static CvrpGraph generateRandom(int nodeCount, String graphName, String graphDescription, int width, int height, boolean depotInMiddle) {
 		LOG.info("Generating Random CVRP Graph\nFetching configurations...");
 		int nodeMargin = Cfg.getInt(Cfg.NODE_MARGIN);
 		int nodeDiameter = Cfg.getInt(Cfg.NODE_DIAMETER);
@@ -222,6 +248,10 @@ public class CvrpGraph {
 		Random random = new Random();
 		
 		LinkedList<Point> nodeCoords = new LinkedList<>();
+		
+		if(depotInMiddle) {
+			nodeCoords.add(new Point(width/2, height/2));
+		}
 		
 		for(int i=0;i<nodeCount;i++) {
 			boolean validNode = true;
@@ -264,6 +294,8 @@ public class CvrpGraph {
 				}
 				
 			}while(!validNode);
+			
+			
 		}
 		
 		return null;

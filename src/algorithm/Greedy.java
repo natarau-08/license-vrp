@@ -2,9 +2,9 @@ package algorithm;
 
 import java.util.LinkedList;
 
-import database.obj.cvrp.CvrpGraph;
-import database.obj.cvrp.CvrpNode;
-import database.obj.cvrp.CvrpRoute;
+import obj.cvrp.CvrpGraph;
+import obj.cvrp.CvrpNode;
+import obj.cvrp.CvrpRoute;
 import utils.Calc;
 import utils.Clock;
 
@@ -15,7 +15,10 @@ public class Greedy {
 	public static void computeGreedySolution(CvrpGraph graph, int maxLoad) {
 		CvrpNode depot = graph.getDepot();
 		
-		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
+		LinkedList<CvrpNode> nodes = new LinkedList<>();
+		for(CvrpNode n: graph.getNodes().values()) {
+			nodes.add(n);
+		}
 		
 		LOG.info("Computing Greedy Solution...");
 		Clock.initClock();
@@ -24,13 +27,9 @@ public class Greedy {
 				(int)(Calc.dist(a, depot) - Calc.dist(b, depot)) 
 			);
 		
-//		nodes.forEach(e -> {
-//			System.out.println(Calc.dist(e, depot));
-//		});
-		
 		LinkedList<CvrpRoute> routes = graph.getRoutes();
 		routes.clear();
-		routes.add(new CvrpRoute());
+		routes.add(new CvrpRoute(graph));
 		
 		for(CvrpNode n: nodes) {
 			if(n == depot)
@@ -39,7 +38,7 @@ public class Greedy {
 			if(routes.getLast().getLoad() + n.getDemand() <= maxLoad) {
 				routes.getLast().add(n.getId());
 			}else {
-				routes.add(new CvrpRoute(n.getId()));
+				routes.add(new CvrpRoute(graph, n.getId()));
 			}
 		}
 		

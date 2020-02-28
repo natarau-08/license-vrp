@@ -18,7 +18,7 @@ public class Cfg {
 			String line;
 			while((line = br.readLine()) != null) {
 				
-				if(line.startsWith("#")) continue;
+				if(line.startsWith("#") || line.trim().length() == 0 || !line.contains("=")) continue;
 				
 				int del = line.indexOf("=");
 				String key = line.substring(0, del);

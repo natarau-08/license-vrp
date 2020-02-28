@@ -1,34 +1,35 @@
-package database.obj.cvrp;
+package obj.cvrp;
 
-import java.util.Collection;
 import java.util.LinkedList;
-import static database.obj.cvrp.CvrpGraph.GRAPH;
 public class CvrpRoute {
 
 	private LinkedList<Integer> nodes;
 	private int load;
+	private CvrpGraph graph;
 	
-	public CvrpRoute() {
+	public CvrpRoute(CvrpGraph graph) {
 		nodes = new LinkedList<>();
-		
+		this.graph = graph;
 		load = 0;
 	}
 	
-	public CvrpRoute(Collection<Integer> c) {
+	public CvrpRoute(CvrpGraph graph, LinkedList<Integer> c) {
 		nodes = new LinkedList<>();
 		nodes.addAll(c);
 		load = 0;
+		this.graph = graph;
 		for(Integer i: c) {
-			load += GRAPH.getNodes().get(i).getDemand();
+			load += graph.getNodes().get(i).getDemand();
 		}
 	}
 	
-	public CvrpRoute(Integer ...n) {
+	public CvrpRoute(CvrpGraph graph, Integer ...n) {
 		nodes = new LinkedList<>();
+		this.graph = graph;
 		load = 0;
 		for(Integer i: n) {
 			nodes.add(i);
-			load += GRAPH.getNodes().get(i).getDemand();
+			load += graph.getNodes().get(i).getDemand();
 		}
 	}
 	
@@ -45,12 +46,12 @@ public class CvrpRoute {
 	
 	public void addLast(int e) {
 		nodes.add(e);
-		load += GRAPH.getNodes().get(e).getDemand();
+		load += graph.getNodes().get(e).getDemand();
 	}
 	
 	public void addFirst(int e) {
 		nodes.addFirst(e);
-		load += GRAPH.getNodes().get(e).getDemand();
+		load += graph.getNodes().get(e).getDemand();
 	}
 	
 	public boolean contains(int e) {
@@ -59,7 +60,7 @@ public class CvrpRoute {
 
 	public void add(int e) {
 		nodes.add(e);
-		load += GRAPH.getNodes().get(e).getDemand();
+		load += graph.getNodes().get(e).getDemand();
 	}
 	
 	public void setLoad(int load) {
@@ -82,7 +83,4 @@ public class CvrpRoute {
 	public String toString() {
 		return nodes.toString();
 	}
-	
-	
-	
 }

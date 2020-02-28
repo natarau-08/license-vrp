@@ -2,7 +2,7 @@ package renderer;
 
 import java.awt.Canvas;
 
-import database.obj.cvrp.CvrpGraph;
+import obj.cvrp.CvrpGraph;
 
 public class GraphVisualizer extends Canvas implements Runnable{
 

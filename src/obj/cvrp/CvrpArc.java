@@ -1,4 +1,4 @@
-package database.obj.cvrp;
+package obj.cvrp;
 
 public class CvrpArc {
 	
@@ -9,11 +9,6 @@ public class CvrpArc {
 		this.node2 = node2;
 	}
 		
-	public CvrpArc(CvrpReduction red) {
-		this.node1 = red.getNode(0);
-		this.node2 = red.getNode(1);
-	}
-	
 	/**
 	 * Hash code for this object is computed with formula <em>(l + g)*(l + g + 1)/2 + g</em>
 	 * where l is the lower node index and g is the greater node index.

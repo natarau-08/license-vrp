@@ -2,12 +2,14 @@ package algorithm;
 
 import static main.Main.LOG;
 
+import java.util.HashMap;
 import java.util.LinkedList;
 
-import database.obj.cvrp.CvrpGraph;
-import database.obj.cvrp.CvrpNode;
-import database.obj.cvrp.CvrpReduction;
-import database.obj.cvrp.CvrpRoute;
+import obj.cvrp.CvrpArc;
+import obj.cvrp.CvrpGraph;
+import obj.cvrp.CvrpNode;
+import obj.cvrp.CvrpReduction;
+import obj.cvrp.CvrpRoute;
 import utils.Clock;
 
 /**
@@ -32,7 +34,7 @@ public class ClarkeWright {
 		LinkedList<CvrpReduction> reductions = new LinkedList<>();
 		LinkedList<CvrpRoute> routes = new LinkedList<>();
 		
-		LinkedList<CvrpNode> nodes = graph.getNodesAsList();
+		HashMap<Integer, CvrpNode> nodes = graph.getNodes();
 		
 		LOG.info("Computing reductions");
 		Clock.initClock();
@@ -45,11 +47,14 @@ public class ClarkeWright {
 				if(id1 == graph.getDepot().getId() || id2 == graph.getDepot().getId() || id1 == id2) {
 					continue;
 				}
-				CvrpReduction red = new CvrpReduction(id1, id2);
+				
+				CvrpReduction red = new CvrpReduction(graph, new CvrpArc(nodes.get(id1), nodes.get(id2)));
+				
 				if(red.getValue() <= 0) {
 					//LOGGER.severe("Reduction " + red + " has negative value? How is it possible?\nPossibly from converting double to int\nWill not be added");
 					continue;
 				}
+				
 				reductions.add(red);
 			}
 		}
@@ -73,7 +78,7 @@ public class ClarkeWright {
 		graph.getRoutes().addAll(routes);
 	}
 	
-	private static void compCWoopSeq(LinkedList<CvrpNode> nodes, LinkedList<CvrpReduction> reductions,
+	private static void compCWoopSeq(HashMap<Integer, CvrpNode> nodes, LinkedList<CvrpReduction> reductions,
 			LinkedList<CvrpRoute> routes) {
 		
 		LinkedList<CvrpReduction> toRemove = new LinkedList<>();
@@ -83,8 +88,7 @@ public class ClarkeWright {
 		
 		while(!reductions.isEmpty()) {
 			
-			
-			currentRoute = new CvrpRoute();
+			currentRoute = new CvrpRoute(graph);
 			
 			for(CvrpReduction r: toRemove) {
 				reductions.remove(r);
@@ -94,12 +98,11 @@ public class ClarkeWright {
 			
 			for(CvrpReduction r: reductions) {
 				
-				int node0 = r.getNode(0).getId();
-				int node1 = r.getNode(1).getId();
+				int node0 = r.getArc().getNode1().getId();
+				int node1 = r.getArc().getNode2().getId();
 				
-				int dem0 = r.getNode(0).getDemand();
-				int dem1 = r.getNode(1).getDemand();
-				
+				int dem0 = graph.getNodes().get(node0).getDemand();
+				int dem1 = graph.getNodes().get(node1).getDemand();
 				
 				inRoutes.clear();
 				
@@ -148,7 +151,7 @@ public class ClarkeWright {
 				routes.add(currentRoute);
 		}
 		
-		for(CvrpNode n: nodes) {
+		for(CvrpNode n: nodes.values()) {
 			boolean found = false;
 			for(CvrpRoute r: routes) {
 				if(r.getNodes().contains(n.getId())) {
@@ -158,26 +161,26 @@ public class ClarkeWright {
 			}
 			
 			if(!found) {
-				routes.add(new CvrpRoute(n.getId()));
+				routes.add(new CvrpRoute(graph, n.getId()));
 			}
 		}
 	}
 
-	private static void compCWoopPar(LinkedList<CvrpNode> nodes, LinkedList<CvrpReduction> reductions, LinkedList<CvrpRoute> routes) {
+	private static void compCWoopPar(HashMap<Integer, CvrpNode> nodes, LinkedList<CvrpReduction> reductions, LinkedList<CvrpRoute> routes) {
 		
 		LinkedList<CvrpRoute> inRoutes = new LinkedList<>();
 		
 		for(CvrpReduction r: reductions) {
 			
-			int dem0 = r.getNode(0).getDemand();
-			int dem1 = r.getNode(1).getDemand();
+			int dem0 = r.getArc().getNode1().getDemand();
+			int dem1 = r.getArc().getNode2().getDemand();
 			
-			int rid0 = r.getNode(0).getId();
-			int rid1 = r.getNode(1).getId();
+			int rid0 = r.getArc().getNode1().getId();
+			int rid1 = r.getArc().getNode2().getId();
 			
 			if(routes.isEmpty()) {
 				if(dem0 + dem1 <= maxLoad) {
-					CvrpRoute ro = new CvrpRoute(rid0, rid1);
+					CvrpRoute ro = new CvrpRoute(graph, rid0, rid1);
 					routes.add(ro);
 					continue;
 				}
@@ -192,7 +195,7 @@ public class ClarkeWright {
 			}
 			
 			if(inRoutes.isEmpty() && rid0 + rid1 < maxLoad) {
-				CvrpRoute route = new CvrpRoute(rid0, rid1);
+				CvrpRoute route = new CvrpRoute(graph, rid0, rid1);
 				routes.add(route);
 				continue;
 			}
@@ -222,7 +225,7 @@ public class ClarkeWright {
 		
 		inRoutes.clear();
 		boolean isIn = false;
-		for(CvrpNode n: nodes) {
+		for(CvrpNode n: nodes.values()) {
 			for(CvrpRoute r: routes) {
 				if(r.contains(n.getId())) {
 					isIn = true;
@@ -232,7 +235,7 @@ public class ClarkeWright {
 			}
 			
 			if(!isIn && n.getDemand() > 0) {
-				inRoutes.add(new CvrpRoute(n.getId()));
+				inRoutes.add(new CvrpRoute(graph, n.getId()));
 				isIn = false;
 				break;
 			}
