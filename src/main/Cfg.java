@@ -10,6 +10,8 @@ public class Cfg {
 	public static final String NODE_MARGIN = "NODE_MARGIN";
 	public static final String NODE_DIAMETER = "NODE_DIAMETER";
 	public static final String MAX_NODE_DRAW_TRIES = "MAX_NODE_DRAW_TRIES";
+//	public static final String RENDER_NODE_COLOR = "RENDER_NODE_COLOR";
+//	public static final String RENDER_BACKGROUND_COLOR = "RENDER_BACKGROUND_COLOR";
 	
 	private static String getConfigurationString(String passedKey) {
 		try {
@@ -43,5 +45,9 @@ public class Cfg {
 	
 	public static int getInt(String key) {
 		return Integer.parseInt(getConfigurationString(key));
+	}
+	
+	public static long getLong(String key) {
+		return Long.parseLong(getConfigurationString(key));
 	}
 }

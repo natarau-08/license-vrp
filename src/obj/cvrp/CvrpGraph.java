@@ -44,6 +44,7 @@ public class CvrpGraph {
 		try {
 			//getting graph data
 			PreparedStatement ps = connection.prepareStatement("SELECT id, description, width, height FROM cvrp_graph WHERE name=?;");
+			ps.setString(1, name);
 			ResultSet res = ps.executeQuery();
 			if(res.next()) {
 				this.id = res.getInt("id");
@@ -66,7 +67,7 @@ public class CvrpGraph {
 			ps.close();
 			
 			//loading nodes
-			ps = connection.prepareStatement("SELECT id, x, y, demand FROM cvrp_node WHERE graph=?;");
+			ps = connection.prepareStatement("SELECT id, x, y, demand FROM cvrp_node WHERE graph=? ORDER BY id;");
 			ps.setInt(1, id);
 			res = ps.executeQuery();
 			
@@ -82,7 +83,7 @@ public class CvrpGraph {
 			ps.close();
 			
 			//getting costs
-			ps = connection.prepareStatement("SELECT id, val, node1, node2 FROM cvrp_cost WHERE graph=?;");
+			ps = connection.prepareStatement("SELECT id, val, node1, node2 FROM cvrp_cost WHERE graph=? ORDER BY id;");
 			ps.setInt(1, id);
 			res = ps.executeQuery();
 			
@@ -102,7 +103,11 @@ public class CvrpGraph {
 		}
 	}
 	
-	protected CvrpGraph() {}
+	protected CvrpGraph() {
+		nodes = new HashMap<>();
+		costs = new HashMap<>();
+		routes = new LinkedList<>();
+	}
 	
 	public int hashCode() {
 		return id;
@@ -133,13 +138,13 @@ public class CvrpGraph {
 		return costs.get(new CvrpArc(nodes.get(i), nodes.get(j))).getValue();
 	}
 	
-	public void save() {
+	public boolean save() {
 		try {
 			connection.setAutoCommit(false);
 			
 			//check if graph exists
-			PreparedStatement exists = connection.prepareStatement("SELECT COUNT(*) AS c FROM cvrp_graph WHERE id=?;");
-			exists.setInt(1, id);
+			PreparedStatement exists = connection.prepareStatement("SELECT COUNT(*) AS c FROM cvrp_graph WHERE name=?;");
+			exists.setString(1, name);
 			ResultSet res = exists.executeQuery();
 			int rowsFound = res.getInt("c");
 			
@@ -155,21 +160,39 @@ public class CvrpGraph {
 			ps.setString(2, description);
 			ps.setInt(3, width);
 			ps.setInt(4, height);
-			
 			ps.execute();
 			ps.close();
 			
-			//clearing database
-			ps = connection.prepareStatement("DELETE FROM cvrp_graph_depot WHERE graph=?;DELETE FROM cvrp_node WHERE graph=?;DELETE FROM cvrp_cost WHERE graph=?;");
+			if(rowsFound == 0) {
+				ps = connection.prepareStatement("SELECT id FROM cvrp_graph WHERE name=?;");
+				ps.setString(1, name);
+				res = ps.executeQuery();
+				res.next();
+				this.id = res.getInt("id");
+				res.close();
+				ps.close();
+			}
+			
+			//clearing database - deleting depot
+			ps = connection.prepareStatement("DELETE FROM cvrp_graph_depot WHERE graph=?;");
 			ps.setInt(1, id);
-			ps.setInt(2, id);
-			ps.setInt(3, id);
+			ps.execute();
+			ps.close();
+			
+			//deleting nodes
+			ps = connection.prepareStatement("DELETE FROM cvrp_node WHERE graph=?;");
+			ps.setInt(1, id);
+			ps.execute();
+			ps.close();
+			
+			//deleting costs
+			ps = connection.prepareStatement("DELETE FROM cvrp_cost WHERE graph=?;");
+			ps.setInt(1, id);
 			ps.execute();
 			ps.close();
 			
 			//inserting nodes
 			final int batchCount = Cfg.getInt(Cfg.SQL_BATCH_COUNT);
-			
 			ps = connection.prepareStatement("INSERT INTO cvrp_node(x, y, demand, graph) VALUES(?,?,?,?);");
 			int j = 1;
 			for(CvrpNode n: nodes.values()) {
@@ -224,40 +247,54 @@ public class CvrpGraph {
 			ps.close();
 			
 			connection.commit();
+			connection.setAutoCommit(true);
+			return true;
 		}catch(SQLException e) {
 			LOG.log(Level.SEVERE, e.getMessage(), e);
-		}finally {
 			try {
 				connection.setAutoCommit(true);
 			}catch(SQLException sqlex) {
 				LOG.log(Level.SEVERE, sqlex.getMessage(), sqlex);
 			}
 		}
+		
+		return false;
 	}
 	
-	public static CvrpGraph generateRandom(int nodeCount, String graphName, String graphDescription, int width, int height, boolean depotInMiddle) {
+	public static CvrpGraph generateRandom(int nodeCount, String graphName, String graphDescription, int width, int height, int minDemand, int maxDemand, boolean depotInMiddle) {
 		LOG.info("Generating Random CVRP Graph\nFetching configurations...");
 		int nodeMargin = Cfg.getInt(Cfg.NODE_MARGIN);
 		int nodeDiameter = Cfg.getInt(Cfg.NODE_DIAMETER);
-		int maxTries = Cfg.getInt(Cfg.MAX_NODE_DRAW_TRIES);
+		long maxTries = Cfg.getLong(Cfg.MAX_NODE_DRAW_TRIES);
 		LOG.info(String.format("Node Options:\nNode Margin: %d, Node Diameter: %d, Max Tries: %d", nodeMargin, nodeDiameter, maxTries));
 		
 		//the minimum distance between nodes and area boundaries
 		int outerRadius = nodeDiameter / 2 + nodeMargin;
 		
 		Random random = new Random();
-		
-		LinkedList<Point> nodeCoords = new LinkedList<>();
+		CvrpGraph graph = new CvrpGraph();
+		graph.name = graphName;
+		graph.description = graphDescription;
+		graph.width = width;
+		graph.height = height;
+		graph.id = 0;
 		
 		if(depotInMiddle) {
-			nodeCoords.add(new Point(width/2, height/2));
+			int demand = minDemand + random.nextInt(maxDemand - minDemand);
+			CvrpNode dep = new CvrpNode(graph.nodes.size(), demand, width/2, height/2);
+			graph.nodes.put(dep.getId(), dep);
+			graph.depot = dep;
 		}
 		
 		for(int i=0;i<nodeCount;i++) {
 			boolean validNode = true;
-			int tries = 0;
+			long tries = 0;
+			
+			int x, y;
+			CvrpNode node;
+			
 			do {
-				int x = random.nextInt(width);
+				x = random.nextInt(width);
 				
 				if(x - outerRadius <= 0) {
 					x += (x - outerRadius) * -1;
@@ -267,7 +304,7 @@ public class CvrpGraph {
 					x -= outerRadius + (x + outerRadius - width);
 				}
 				
-				int y = random.nextInt(height);
+				y = random.nextInt(height);
 				
 				if(y - outerRadius <= 0) {
 					y += (y - outerRadius) * -1;
@@ -277,12 +314,15 @@ public class CvrpGraph {
 					y -= outerRadius + (y + outerRadius - height);
 				}
 				
-				Point pc = new Point(x, y);
-				
+				//Point pc = new Point(x, y);
+				node = new CvrpNode(graph.nodes.size(), minDemand + random.nextInt(maxDemand - minDemand), x, y);
 				tries++;
 				
-				for(Point p: nodeCoords) {
-					if(Calc.dist(p, pc) < outerRadius * 2) {
+				for(CvrpNode n: graph.nodes.values()) {
+					Point p1 = new Point(n.getX(), n.getY());
+					Point p2 = new Point(node.getX(), node.getY());
+					
+					if(Calc.dist(p1, p2) < outerRadius * 2) {
 						validNode = false;
 						break;
 					}
@@ -295,7 +335,17 @@ public class CvrpGraph {
 				
 			}while(!validNode);
 			
+			graph.nodes.put(node.getId(), node);
 			
+		}
+		
+		if(!depotInMiddle) {
+			CvrpNode dep = graph.nodes.get(random.nextInt(graph.nodes.size()));
+			graph.depot = dep;
+		}
+		
+		if(graph.save()) {
+			return new CvrpGraph(graphName);
 		}
 		
 		return null;
