@@ -7,9 +7,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
-import algorithm.ClarkeWright;
 import obj.cvrp.CvrpGraph;
-import renderer.CvrpRenderer;
+import renderer.CvrpRealRenderer;
 
 public class Main {
 
@@ -28,11 +27,9 @@ public class Main {
 			fh.setFormatter(formatter);
 			LOG.addHandler(fh);
 			
-			//CvrpGraph graph = CvrpGraph.generateRandom(10, "refactoring-test", "none", 800, 800, 2, 10, true);
-			//graph.save();
-			CvrpGraph graph = new CvrpGraph("refactoring-test");
-			//ClarkeWright.computeClarkeWrightSolution(graph, 30, ClarkeWright.CLARKE_WRIGHT_PARALLEL);
-			CvrpRenderer.renderGraph(graph);
+			CvrpGraph graph = new CvrpGraph("test", "none");
+			new CvrpRealRenderer(graph);
+			CvrpGraph.generateRandom(100, 2, 10, true, graph);
 			
 			connection.close();
 			LOG.info("Finished");

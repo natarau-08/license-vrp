@@ -8,10 +8,15 @@ public class Cfg {
 	public static final String CONNECTION_STRING = "CONNECTION_STRING";
 	public static final String SQL_BATCH_COUNT = "SQL_BATCH_COUNT";
 	public static final String NODE_MARGIN = "NODE_MARGIN";
-	public static final String NODE_DIAMETER = "NODE_DIAMETER";
+	public static final String NODE_PADDING = "NODE_PADDING";
+	public static final String DRAW_NODE_MARGIN = "DRAW_NODE_MARGIN";
 	public static final String MAX_NODE_DRAW_TRIES = "MAX_NODE_DRAW_TRIES";
-//	public static final String RENDER_NODE_COLOR = "RENDER_NODE_COLOR";
-//	public static final String RENDER_BACKGROUND_COLOR = "RENDER_BACKGROUND_COLOR";
+	public static final String GRAPH_WIDTH = "GRAPH_WIDTH";
+	public static final String GRAPH_HEIGHT = "GRAPH_HEIGHT";
+	public static final String NODE_MARGIN_DAMP = "NODE_MARGIN_DAMP";
+	
+	public static final String ON_NODE_GENERATED_SLEEP = "ON_NODE_GENERATED_SLEEP";
+	public static final String ON_NODE_FAILED_SLEEP = "ON_NODE_FAILED_SLEEP";
 	
 	private static String getConfigurationString(String passedKey) {
 		try {
@@ -35,8 +40,10 @@ public class Cfg {
 			br.close();
 		}catch(Exception e) {
 			e.printStackTrace();
+			throw new RuntimeException("Error while reading configuration.cfg");
 		}
-		return null;
+		
+		throw new RuntimeException(String.format("Configuration property name %s was not found in configuration.cfg", passedKey));
 	}
 	
 	public static String getString(String key) {
@@ -49,5 +56,9 @@ public class Cfg {
 	
 	public static long getLong(String key) {
 		return Long.parseLong(getConfigurationString(key));
+	}
+	
+	public static boolean getBoolean(String key) {
+		return Boolean.parseBoolean(getConfigurationString(key));
 	}
 }

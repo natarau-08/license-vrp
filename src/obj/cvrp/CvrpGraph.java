@@ -31,9 +31,11 @@ public class CvrpGraph {
 	private LinkedList<CvrpRoute> routes;
 	private CvrpNode depot;
 	private String description, name;
-	private int id, width, height;
-		
-	public CvrpGraph(String name) {
+	private int id, width, height, nodeMargin, nodePadding;
+	
+	public Point lastFailedNode;
+	
+ 	public CvrpGraph(String name) {
 		nodes = new HashMap<>();
 		costs = new HashMap<>();
 		routes = new LinkedList<>();
@@ -43,7 +45,7 @@ public class CvrpGraph {
 		//fetching from database
 		try {
 			//getting graph data
-			PreparedStatement ps = connection.prepareStatement("SELECT id, description, width, height FROM cvrp_graph WHERE name=?;");
+			PreparedStatement ps = connection.prepareStatement("SELECT id, description, width, height, margin, node_diameter FROM cvrp_graph WHERE name=?;");
 			ps.setString(1, name);
 			ResultSet res = ps.executeQuery();
 			if(res.next()) {
@@ -51,6 +53,8 @@ public class CvrpGraph {
 				this.description = res.getString("description");
 				this.width = res.getInt("width");
 				this.height = res.getInt("height");
+				this.nodeMargin = res.getInt("margin");
+				this.nodePadding = res.getInt("node_diameter");
 			}
 			res.close();
 			ps.close();
@@ -103,10 +107,18 @@ public class CvrpGraph {
 		}
 	}
 	
-	protected CvrpGraph() {
+	public CvrpGraph(String name, String description) {
 		nodes = new HashMap<>();
 		costs = new HashMap<>();
 		routes = new LinkedList<>();
+		
+		this.name = name;
+		this.description = description;
+		this.nodeMargin = Cfg.getInt(Cfg.NODE_MARGIN);
+		this.nodePadding = Cfg.getInt(Cfg.NODE_PADDING);
+		this.width = Cfg.getInt(Cfg.GRAPH_WIDTH);
+		this.height = Cfg.getInt(Cfg.GRAPH_HEIGHT);
+		this.id = 0;
 	}
 	
 	public int hashCode() {
@@ -133,6 +145,8 @@ public class CvrpGraph {
 	public int getHeight() {return height;}
 	public String getName() {return name;}
 	public String getDescription() {return description;}
+	public int getNodePadding() {return nodePadding;}
+	public int getNodeMargin() {return nodeMargin;}
 	
 	public int getCostValue(int i, int j) {
 		return costs.get(new CvrpArc(nodes.get(i), nodes.get(j))).getValue();
@@ -143,23 +157,31 @@ public class CvrpGraph {
 			connection.setAutoCommit(false);
 			
 			//check if graph exists
-			PreparedStatement exists = connection.prepareStatement("SELECT COUNT(*) AS c FROM cvrp_graph WHERE name=?;");
+			PreparedStatement exists = connection.prepareStatement("SELECT id FROM cvrp_graph WHERE name=?;");
 			exists.setString(1, name);
 			ResultSet res = exists.executeQuery();
-			int rowsFound = res.getInt("c");
+			int rowsFound = -1;
+			if(res.next()) {
+				rowsFound = 1;
+				id = res.getInt("id");
+			}else {
+				rowsFound = 0;
+			}
 			
 			PreparedStatement ps;
 			if(rowsFound == 1) {
-				ps = connection.prepareStatement("UPDATE cvrp_graph SET name=?, description=?, width=?, height=?, node_padding=? WHERE id=?;");
-				ps.setInt(6, id);
+				ps = connection.prepareStatement("UPDATE cvrp_graph SET name=?, description=?, width=?, height=?, node_diameter=?, margin=? WHERE id=?;");
+				ps.setInt(7, id);
 			}else {
-				ps = connection.prepareStatement("INSERT INTO cvrp_graph(name, description, width, height) VALUES(?,?,?,?);");
+				ps = connection.prepareStatement("INSERT INTO cvrp_graph(name, description, width, height, node_diameter, margin) VALUES(?,?,?,?,?,?);");
 			}
 			
 			ps.setString(1, name);
 			ps.setString(2, description);
 			ps.setInt(3, width);
 			ps.setInt(4, height);
+			ps.setInt(5, nodePadding);
+			ps.setInt(6, nodeMargin);
 			ps.execute();
 			ps.close();
 			
@@ -261,93 +283,103 @@ public class CvrpGraph {
 		return false;
 	}
 	
-	public static CvrpGraph generateRandom(int nodeCount, String graphName, String graphDescription, int width, int height, int minDemand, int maxDemand, boolean depotInMiddle) {
+	public static void generateRandom(int nodeCount, int minDemand, int maxDemand, boolean depotInMiddle, CvrpGraph graph) {
 		LOG.info("Generating Random CVRP Graph\nFetching configurations...");
-		int nodeMargin = Cfg.getInt(Cfg.NODE_MARGIN);
-		int nodeDiameter = Cfg.getInt(Cfg.NODE_DIAMETER);
-		long maxTries = Cfg.getLong(Cfg.MAX_NODE_DRAW_TRIES);
-		LOG.info(String.format("Node Options:\nNode Margin: %d, Node Diameter: %d, Max Tries: %d", nodeMargin, nodeDiameter, maxTries));
-		
-		//the minimum distance between nodes and area boundaries
-		int outerRadius = nodeDiameter / 2 + nodeMargin;
+		final long maxTries = Cfg.getLong(Cfg.MAX_NODE_DRAW_TRIES);
+		final int nodeSleep = Cfg.getInt(Cfg.ON_NODE_GENERATED_SLEEP);
+		final int nodeFailSleep = Cfg.getInt(Cfg.ON_NODE_FAILED_SLEEP);
+		final int marginCorrect = Cfg.getInt(Cfg.NODE_MARGIN_DAMP);
+		LOG.info(String.format("Node Options:\nNode Margin: %d, Node Padding: %d, Max Tries: %d", graph.nodeMargin, graph.nodePadding, maxTries));
 		
 		Random random = new Random();
-		CvrpGraph graph = new CvrpGraph();
-		graph.name = graphName;
-		graph.description = graphDescription;
-		graph.width = width;
-		graph.height = height;
-		graph.id = 0;
-		
 		if(depotInMiddle) {
 			int demand = minDemand + random.nextInt(maxDemand - minDemand);
-			CvrpNode dep = new CvrpNode(graph.nodes.size(), demand, width/2, height/2);
+			CvrpNode dep = new CvrpNode(graph.nodes.size(), demand, graph.getWidth()/2, graph.getHeight()/2);
 			graph.nodes.put(dep.getId(), dep);
 			graph.depot = dep;
 		}
 		
-		for(int i=0;i<nodeCount;i++) {
-			boolean validNode = true;
+		for(int i=0;i<nodeCount - (depotInMiddle ? 1 : 0);i++) {
+			
 			long tries = 0;
 			
-			int x, y;
-			CvrpNode node;
 			
+			CvrpNode node;
+			boolean validNode = true;
 			do {
-				x = random.nextInt(width);
 				
-				if(x - outerRadius <= 0) {
-					x += (x - outerRadius) * -1;
+				double x = random.nextDouble() * (double)graph.getWidth();
+				
+				if(x - graph.nodeMargin <= 0) {
+					x = graph.nodeMargin;
 				}
 				
-				if(x + outerRadius >= width) {
-					x -= outerRadius + (x + outerRadius - width);
+				if(x + graph.nodeMargin >= graph.getWidth()) {
+					x = graph.getWidth() - graph.nodeMargin;
 				}
 				
-				y = random.nextInt(height);
+				double y = random.nextDouble() * graph.getHeight();
 				
-				if(y - outerRadius <= 0) {
-					y += (y - outerRadius) * -1;
+				if(y - graph.nodeMargin <= 0) {
+					y = graph.nodeMargin;
 				}
 				
-				if(y + outerRadius >= height) {
-					y -= outerRadius + (y + outerRadius - height);
+				if(y + graph.nodeMargin >= graph.getHeight()) {
+					y = graph.getHeight() - graph.nodeMargin;
 				}
 				
 				//Point pc = new Point(x, y);
-				node = new CvrpNode(graph.nodes.size(), minDemand + random.nextInt(maxDemand - minDemand), x, y);
+				node = new CvrpNode(graph.nodes.size(), minDemand + random.nextInt(maxDemand - minDemand), (int)x, (int)y);
 				tries++;
 				
+				validNode = true;
 				for(CvrpNode n: graph.nodes.values()) {
 					Point p1 = new Point(n.getX(), n.getY());
-					Point p2 = new Point(node.getX(), node.getY());
+					Point p2 = new Point(x, y);
 					
-					if(Calc.dist(p1, p2) < outerRadius * 2) {
+					double d = Calc.dist(p1, p2);
+					
+					if(d < graph.nodeMargin - marginCorrect) {
 						validNode = false;
+						graph.lastFailedNode = p2;
+						
+						LOG.info(String.format("Cannot create node at %s, already a node at %s. Distance between is %s. Try #%d", p2, p1, (int)d, tries));
+						
+						if(nodeFailSleep != 0) {
+							try {
+								Thread.sleep(nodeFailSleep);
+							}catch(Exception e) {
+								e.printStackTrace();
+							}
+						}
+						
 						break;
 					}
 				}
 				
-				if(tries > maxTries) {
+				if(tries > maxTries && maxTries != 0) {
 					LOG.info(String.format("Cannot generate CvrpGraph. Tried %d times to generate node and no space could be found.", tries));
 					throw new RuntimeException("\n\nFATAL ERROR:\nREACHED MAX TRIES FOR GENERATING A NODE FOR CVRP GRAPH");
 				}
 				
 			}while(!validNode);
 			
-			graph.nodes.put(node.getId(), node);
+			if(nodeSleep != 0) {
+				try {
+					Thread.sleep(nodeSleep);
+				}catch(Exception e) {
+					e.printStackTrace();
+				}
+			}
 			
+			graph.nodes.put(node.getId(), node);
 		}
+		
+		//TODO - genereate costs between nodes
 		
 		if(!depotInMiddle) {
 			CvrpNode dep = graph.nodes.get(random.nextInt(graph.nodes.size()));
 			graph.depot = dep;
 		}
-		
-		if(graph.save()) {
-			return new CvrpGraph(graphName);
-		}
-		
-		return null;
 	}
 }

@@ -19,10 +19,10 @@ import obj.cvrp.CvrpRoute;
 public class CvrpRenderer {
 	
 	public static void renderGraph(CvrpGraph graph) {
-		int nodeDia = Cfg.getInt(Cfg.NODE_DIAMETER);
 		
 		BufferedImage img = new BufferedImage(graph.getWidth(), graph.getHeight(), BufferedImage.TYPE_3BYTE_BGR);
 		Graphics2D g = (Graphics2D)img.getGraphics();
+		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		
 		//draw background
 		g.setColor(Color.WHITE);
@@ -45,23 +45,26 @@ public class CvrpRenderer {
 			}
 		}
 		
-		
+		boolean drawMargin = Cfg.getBoolean(Cfg.DRAW_NODE_MARGIN);
+		int outerRadius = graph.getNodePadding() / 2 + graph.getNodeMargin();
 		//draw nodes
-		g.setColor(Color.red);
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		int id = 1;
 		for(CvrpNode n: graph.getNodes().values()) {
-			int x = n.getX() - nodeDia / 2;
-			int y = n.getY() - nodeDia / 2;
+			int x = n.getX() - graph.getNodePadding() / 2;
+			int y = n.getY() - graph.getNodePadding() / 2;
 			
 			g.setColor(Color.red);
-			g.fillOval(x, y, nodeDia, nodeDia);
+			g.fillOval(x, y, graph.getNodePadding(), graph.getNodePadding());
+			
+			if (drawMargin) {
+				g.setColor(Color.MAGENTA);
+				g.drawOval(n.getX() - outerRadius, n.getY() - outerRadius, outerRadius * 2, outerRadius * 2);
+			}
+			
 			g.setColor(Color.black);
 			g.drawString(String.format("%d", id), x, y + 20);
 			id++;
 		}
-		
-		
 		
 		try {
 			File f = new File(graph.getName() + ".png");
