@@ -303,11 +303,10 @@ public class CvrpGraph {
 			
 			long tries = 0;
 			
-			
 			CvrpNode node;
 			boolean validNode = true;
 			do {
-				
+				// generate random coordinates and clamp coordinates to edges
 				double x = random.nextDouble() * (double)graph.getWidth();
 				
 				if(x - graph.nodeMargin <= 0) {
@@ -328,10 +327,10 @@ public class CvrpGraph {
 					y = graph.getHeight() - graph.nodeMargin;
 				}
 				
-				//Point pc = new Point(x, y);
 				node = new CvrpNode(graph.nodes.size(), minDemand + random.nextInt(maxDemand - minDemand), (int)x, (int)y);
 				tries++;
 				
+				// check if generated node is too close to another node
 				validNode = true;
 				for(CvrpNode n: graph.nodes.values()) {
 					Point p1 = new Point(n.getX(), n.getY());
@@ -376,6 +375,18 @@ public class CvrpGraph {
 		}
 		
 		//TODO - genereate costs between nodes
+		// costs will be equal to distance
+		// cost from i to j is equal to cost from j to i so only one pair will be generated
+		for(int i=0;i<graph.nodes.size() - 1;i++) {
+			for(int j=i+1;j<graph.nodes.size();j++) {
+				CvrpNode n1 = graph.nodes.get(i);
+				CvrpNode n2 = graph.nodes.get(j);
+				
+				CvrpArc arc = new CvrpArc(n1, n2);
+				CvrpCost cost = new CvrpCost(graph.costs.size(), (int)Calc.dist(n1, n2), arc);
+				graph.costs.put(arc, cost);
+			}
+		}
 		
 		if(!depotInMiddle) {
 			CvrpNode dep = graph.nodes.get(random.nextInt(graph.nodes.size()));

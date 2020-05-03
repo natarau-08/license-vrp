@@ -18,6 +18,8 @@ public class Cfg {
 	public static final String ON_NODE_GENERATED_SLEEP = "ON_NODE_GENERATED_SLEEP";
 	public static final String ON_NODE_FAILED_SLEEP = "ON_NODE_FAILED_SLEEP";
 	
+	public static final String ANTIALIASING = "ANTIALIASING"; 
+	
 	private static String getConfigurationString(String passedKey) {
 		try {
 			BufferedReader br = new BufferedReader(new FileReader("configuration.cfg"));
