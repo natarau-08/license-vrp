@@ -158,7 +158,7 @@ public class CvrpRenderer extends Canvas implements Runnable{
 							g.fillRect(nodes[i].getX(), nodes[i].getY(), 1, 1);
 						}
 						
-						if(saveImage) {
+						if(saveImage && image != null) {
 							saveImage = false;
 							String fileName = UUID.randomUUID() + ".png";
 							try {

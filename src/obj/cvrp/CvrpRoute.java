@@ -44,10 +44,7 @@ public class CvrpRoute {
 		return nodes.getLast();
 	}
 	
-	public void addLast(int e) {
-		nodes.add(e);
-		load += graph.getNodes().get(e).getDemand();
-	}
+	public void addLast(int e) {add(e);}
 	
 	public void addFirst(int e) {
 		nodes.addFirst(e);

@@ -4,7 +4,7 @@ import obj.cvrp.CvrpGraph;
 import obj.cvrp.CvrpNode;
 import obj.cvrp.CvrpRoute;
 
-public class Calc {
+public class Utils {
 
 	public static double dist(Point p1, Point p2) {
 		double t1 = Math.pow(p1.x - p2.x, 2);
@@ -41,6 +41,8 @@ public class Calc {
 		return cost;
 	}
 	
+	
+	/*Obsolete*/
 	public static Point computeRouteCenterOfMass(CvrpRoute r, CvrpGraph g) {
 		
 		CvrpNode dep = g.getDepot();

@@ -12,7 +12,7 @@ import java.util.Random;
 import java.util.logging.Level;
 
 import main.Cfg;
-import utils.Calc;
+import utils.Utils;
 import utils.Point;
 
 /**
@@ -336,7 +336,7 @@ public class CvrpGraph {
 					Point p1 = new Point(n.getX(), n.getY());
 					Point p2 = new Point(x, y);
 					
-					double d = Calc.dist(p1, p2);
+					double d = Utils.dist(p1, p2);
 					
 					if(d < graph.nodeMargin - marginCorrect) {
 						validNode = false;
@@ -383,7 +383,7 @@ public class CvrpGraph {
 				CvrpNode n2 = graph.nodes.get(j);
 				
 				CvrpArc arc = new CvrpArc(n1, n2);
-				CvrpCost cost = new CvrpCost(graph.costs.size(), (int)Calc.dist(n1, n2), arc);
+				CvrpCost cost = new CvrpCost(graph.costs.size(), (int)Utils.dist(n1, n2), arc);
 				graph.costs.put(arc, cost);
 			}
 		}

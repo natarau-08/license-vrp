@@ -5,7 +5,7 @@ import java.util.LinkedList;
 import obj.cvrp.CvrpGraph;
 import obj.cvrp.CvrpNode;
 import obj.cvrp.CvrpRoute;
-import utils.Calc;
+import utils.Utils;
 import utils.Clock;
 
 import static main.Main.LOG;
@@ -24,7 +24,7 @@ public class Greedy {
 		Clock.initClock();
 		
 		nodes.sort((a, b) -> 
-				(int)(Calc.dist(a, depot) - Calc.dist(b, depot)) 
+				(int)(Utils.dist(a, depot) - Utils.dist(b, depot)) 
 			);
 		
 		LinkedList<CvrpRoute> routes = graph.getRoutes();
